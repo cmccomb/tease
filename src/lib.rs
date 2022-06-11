@@ -24,11 +24,17 @@ use wry::{
     webview::{WebView, WebViewAttributes, WebViewBuilder},
 };
 
+pub enum Input {
+    Number(f64),
+    Text(String),
+    Slider(f64, f64, f64),
+}
+
 /// ```
 /// let model = tease::train_lasso_regression();
-/// tease::run(move |x| model.predict(&x).unwrap()).expect("Could not run");
+/// tease::run(move |x| model.predict(&x).unwrap(), &[tease::Input::Number(0.3)]).expect("Could not run");
 /// ```
-pub fn run<F>(predictor: F) -> wry::Result<()>
+pub fn run<F>(predictor: F, inputs: &[Input]) -> wry::Result<()>
 where
     F: 'static + Fn(DenseMatrix<f64>) -> Vec<f64>,
 {
