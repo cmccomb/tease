@@ -163,3 +163,14 @@ pub fn train_lasso_regression() -> Lasso<f64, DenseMatrix<f64>> {
 
     lr
 }
+
+fn add_number(index: usize, initial_value: f64) -> String {
+    format!("\
+        <div class=\"form-group row\">
+            <label for=\"exampleInput{index}\" class=\"col-sm-2 col-form-label\"><i>x<sub>{index}</sub> = </i></label>
+            <div class=\"col-sm-10\">
+                <input type=\"text\" class=\"form-control input\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\">
+            </div>
+        </div>
+        ")
+}
