@@ -23,10 +23,10 @@ fn main() {
             },
             Input::Number(60.323),
         ])
-        .run(move |x| {
+        .with_function(move |x| {
             let xx = DenseMatrix::from_2d_vec(&vec![x; 1]);
             model.predict(&xx).unwrap()[0]
-        });
+        }).run();
 }
 
 pub fn train_linear_regression() -> LinearRegression<f64, DenseMatrix<f64>> {

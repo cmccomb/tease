@@ -50,6 +50,7 @@ pub struct Teaser {
     title: String,
     description: String,
     inputs: Vec<Input>,
+    function: Box<dyn 'static + Fn(Vec<f64>) -> f64>,
 }
 
 impl Default for Teaser {
@@ -57,7 +58,8 @@ impl Default for Teaser {
         Self {
             title: "Demo".to_string(),
             description: "".to_string(),
-            inputs: vec![],
+            inputs: vec![Input::Number(0.0)],
+            function: Box::new(|x| x[0]),
         }
     }
 }
@@ -81,11 +83,17 @@ impl Teaser {
         self
     }
 
-    /// Adds the function and runs the GUI
-    pub fn run<F>(self, predictor: F)
+    /// Specify the function to use
+    pub fn with_function<F>(mut self, predictor: F) -> Self
     where
         F: 'static + Fn(Vec<f64>) -> f64,
     {
+        self.function = Box::new(predictor);
+        self
+    }
+
+    /// Run the GUI
+    pub fn run(self) {
         thread_local! {
             static WEBVIEW: RefCell<HashMap<usize, WebView>> = RefCell::new(HashMap::new());
         }
@@ -133,7 +141,7 @@ impl Teaser {
                     inputs.push(number.parse().unwrap());
                 }
 
-                let y = predictor(inputs);
+                let y = (*self.function)(inputs);
                 WEBVIEW
                     .with(|webview| {
                         let webview = webview.borrow();
