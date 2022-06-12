@@ -3,7 +3,7 @@
 [![docs.rs](https://img.shields.io/docsrs/tease/latest?logo=rust)](https://docs.rs/tease)
 
 # About _tease_
-This crate provides the ability to rapidly generate a GUI (a _teaser_) for a wide array of possible rust functions. It is intended to be used for prototyping machine learningn models. 
+This crate provides the ability to rapidly generate a GUI (a _teaser_) for a wide array of possible rust functions. It is intended to be used for prototyping machine learning models. Inspired by [gradio](https://gradio.app/).
 
 # Usage
 Running this code will produce a GUI for adding two numbers together
