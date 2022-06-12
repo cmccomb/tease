@@ -5,7 +5,10 @@ use tease::{run, Input};
 fn main() {
     let model = train_linear_regression();
     run(
-        move |x| model.predict(&x).unwrap(),
+        move |x| {
+            let xx = DenseMatrix::from_2d_vec(&vec![x; 1]);
+            model.predict(&xx).unwrap()[0]
+        },
         &[
             Input::Number(234.289),
             Input::Number(235.6),
