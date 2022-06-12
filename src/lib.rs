@@ -19,21 +19,33 @@ mod html_chunks;
 use html_chunks::{add_dropdown, add_number, add_slider, add_text, beginning, end};
 
 #[derive(Clone)]
+/// Types of inputs for the model
 pub enum Input {
+    /// A numerical input
     Number(f64),
+    /// A text input
     Text(String),
+    /// A slider input
     Slider {
+        /// Minimum value at far left of slider
         min: f64,
+        /// Maximum value at far right of slider
         max: f64,
+        /// Step size between minimum and maximum
         step: f64,
+        /// Initial value to show on the slider
         initial_value: f64,
     },
+    /// A dropdown input
     Dropdown {
+        /// Set of options to include in the dropdown
         options: Vec<f64>,
+        /// Initial value to show for the dropdown
         initial_value: usize,
     },
 }
 
+/// Construct a teaser to demonstrate your model
 pub struct Teaser {
     title: String,
     description: String,
@@ -51,19 +63,25 @@ impl Default for Teaser {
 }
 
 impl Teaser {
+    /// Add a title to the GUI
     pub fn with_title(mut self, title: String) -> Self {
         self.title = title;
         self
     }
+
+    /// Add a description to the GUI
     pub fn with_description(mut self, description: String) -> Self {
         self.description = description;
         self
     }
+
+    /// Specify the inputs
     pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
         self.inputs = inputs;
         self
     }
 
+    /// Adds the function and runs the GUI
     pub fn run<F>(self, predictor: F)
     where
         F: 'static + Fn(Vec<f64>) -> f64,

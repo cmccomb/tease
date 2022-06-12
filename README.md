@@ -17,3 +17,5 @@ Teaser::default()
 ```
 And it will look something like this:
 ![](https://raw.githubusercontent.com/cmccomb/tease/master/assets/addition.png)
+But, you can also run more complex demos! Take a look at [this example](https://github.com/cmccomb/tease/blob/master/examples/inputs.rs), for instance. It trains a smartcore machine learning model and then outputs a GUI for it!
+![](https://raw.githubusercontent.com/cmccomb/tease/master/assets/smartcore.png)
