@@ -1,15 +1,15 @@
 use smartcore::linalg::naive::dense_matrix::DenseMatrix;
 use smartcore::linear::linear_regression::{LinearRegression, LinearRegressionParameters};
-use tease::{run, Input};
+use tease::{Input, Teaser};
 
 fn main() {
     let model = train_linear_regression();
-    run(
+    Teaser::run(
         move |x| {
             let xx = DenseMatrix::from_2d_vec(&vec![x; 1]);
             model.predict(&xx).unwrap()[0]
         },
-        &[
+        vec![
             Input::Number(234.289),
             Input::Number(235.6),
             Input::Dropdown {
