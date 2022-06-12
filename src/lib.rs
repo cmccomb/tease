@@ -18,6 +18,7 @@ use wry::{
 mod html_chunks;
 use html_chunks::{add_dropdown, add_number, add_slider, add_text, beginning, end};
 
+#[derive(Clone)]
 pub enum Input {
     Number(f64),
     Text(String),
@@ -33,10 +34,37 @@ pub enum Input {
     },
 }
 
-pub struct Teaser {}
+pub struct Teaser {
+    title: String,
+    description: String,
+    inputs: Vec<Input>,
+}
+
+impl Default for Teaser {
+    fn default() -> Self {
+        Self {
+            title: "Demo".to_string(),
+            description: "".to_string(),
+            inputs: vec![],
+        }
+    }
+}
 
 impl Teaser {
-    pub fn run<F>(predictor: F, inputs: Vec<Input>)
+    pub fn with_title(mut self, title: String) -> Self {
+        self.title = title;
+        self
+    }
+    pub fn with_description(mut self, description: String) -> Self {
+        self.description = description;
+        self
+    }
+    pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
+        self.inputs = inputs;
+        self
+    }
+
+    pub fn run<F>(self, predictor: F)
     where
         F: 'static + Fn(Vec<f64>) -> f64,
     {
@@ -44,8 +72,8 @@ impl Teaser {
             static WEBVIEW: RefCell<HashMap<usize, WebView>> = RefCell::new(HashMap::new());
         }
 
-        let mut html = beginning();
-        for (idx, input) in inputs.iter().enumerate() {
+        let mut html = beginning(self.description);
+        for (idx, input) in self.inputs.iter().enumerate() {
             html = format!(
                 "{} {}",
                 html,
@@ -69,7 +97,7 @@ impl Teaser {
 
         let event_loop = EventLoop::new();
         let window = WindowBuilder::new()
-            .with_title("Tease")
+            .with_title(self.title)
             .build(&event_loop)
             .unwrap();
 

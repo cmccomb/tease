@@ -54,27 +54,28 @@ pub(crate) fn add_dropdown(
     output
 }
 
-pub(crate) fn beginning() -> String {
-    "<html lang=\"en\">
+pub(crate) fn beginning(description: String) -> String {
+    format!("<html lang=\"en\">
         <head>
             <meta charset=\"utf-8\">
             <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">
             <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css\" integrity=\"sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T\" crossorigin=\"anonymous\">
             <script type=\"text/javascript\">
-                function run_calculation() {
+                function run_calculation() {{
                     var numbers = [];
                     var classes = document.getElementsByClassName('input');
                     Array.from(classes).forEach((x, i) => numbers.push(Number(x.value)));
                     ipc.postMessage(numbers.toString());
-                }
+                }}
             </script>
         </head>
         <body>
             <div class=\"container\">
+                <p class=\"mt-3 text-center\">{description}</p>
                 <div class=\"row mt-3\">
                     <div class=\"col text-center\">
                         <form action=\"#\" method=\"POST\" onsubmit=\"run_calculation()\">
-                            <div class=\"form-group row\" id=\"input-group\">".to_string()
+                            <div class=\"form-group row\" id=\"input-group\">")
 }
 
 pub(crate) fn end() -> String {

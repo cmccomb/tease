@@ -4,12 +4,10 @@ use tease::{Input, Teaser};
 
 fn main() {
     let model = train_linear_regression();
-    Teaser::run(
-        move |x| {
-            let xx = DenseMatrix::from_2d_vec(&vec![x; 1]);
-            model.predict(&xx).unwrap()[0]
-        },
-        vec![
+    Teaser::default()
+        .with_title("Linear Regression".to_string())
+        .with_description(format!("This demonstration runs a <a href=\"https://smartcorelib.org/\">Smartcore</a> model and shows the results in real time."))
+        .with_inputs(vec![
             Input::Number(234.289),
             Input::Number(235.6),
             Input::Dropdown {
@@ -24,8 +22,11 @@ fn main() {
                 initial_value: 1947.0,
             },
             Input::Number(60.323),
-        ],
-    );
+        ])
+        .run(move |x| {
+            let xx = DenseMatrix::from_2d_vec(&vec![x; 1]);
+            model.predict(&xx).unwrap()[0]
+        });
 }
 
 pub fn train_linear_regression() -> LinearRegression<f64, DenseMatrix<f64>> {
