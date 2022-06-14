@@ -15,6 +15,8 @@ use wry::{
     webview::{WebView, WebViewAttributes, WebViewBuilder},
 };
 
+pub mod cookbook;
+
 mod html_chunks;
 use html_chunks::{add_dropdown, add_number, add_slider, add_text, beginning, end};
 
@@ -56,10 +58,10 @@ pub struct Teaser {
 impl Default for Teaser {
     fn default() -> Self {
         Self {
-            title: "Demo".to_string(),
+            title: "".to_string(),
             description: "".to_string(),
             inputs: vec![Input::Number(0.0)],
-            function: Box::new(|x| x[0]),
+            function: Box::new(|_| -1.0),
         }
     }
 }
