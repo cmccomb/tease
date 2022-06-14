@@ -11,9 +11,11 @@ documentation = "https://docs.rs/tease"
 license = "MIT OR Apache-2.0"
 keywords = ["machine-learning", "ml", "ai", "smartcore", "gui"]
 categories = ["algorithms", "mathematics", "gui"]
+exclude = ["assets/"]
 
 [dependencies]
 wry = "0.18.2"
 
 [dev-dependencies]
 smartcore = "0.2.1"
+automl = { git = "https://github.com/cmccomb/rust-automl" }
