@@ -15,6 +15,12 @@ fn main() {
             let y: Vec<f32> = x.iter().map(|el| *el as f32).collect();
             model.predict(vec![y; 1])[0] as f64
         })
-        .with_inputs(vec![Input::Number(0.0); 10])
+        .with_inputs(vec![
+            Input::Number {
+                label: None,
+                initial_value: 0.0
+            };
+            10
+        ])
         .run();
 }

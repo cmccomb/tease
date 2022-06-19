@@ -17,7 +17,7 @@
 //!
 //! fn main() {
 //!     Teaser::default()
-//!         .with_inputs(vec![Input::Number(0.0); 2])
+//!         .with_inputs(vec![Input::Number{label: None, initial_value: 0.0}; 2])
 //!         .with_function(move |x| x.iter().sum())
 //!         .run();
 //! }
