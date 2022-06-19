@@ -22,11 +22,23 @@ use html_chunks::{add_dropdown, add_number, add_slider, add_text, beginning, end
 /// Types of inputs for the model
 pub enum Input {
     /// A numerical input
-    Number(f64),
+    Number {
+        /// Label to be shown at left. If value is `None`, a default of the form $x_N$ will be shown.
+        label: Option<String>,
+        /// Initial value to shown in the textbox
+        initial_value: f64,
+    },
     /// A text input
-    Text(String),
+    Text {
+        /// Label to be shown at left. If value is `None`, a default of the form $x_N$ will be shown.
+        label: Option<String>,
+        /// Initial value to shown in the textbox
+        initial_value: String,
+    },
     /// A slider input
     Slider {
+        /// Label to be shown at left. If value is `None`, a default of the form $x_N$ will be shown.
+        label: Option<String>,
         /// Minimum value at far left of slider
         min: f64,
         /// Maximum value at far right of slider
@@ -38,10 +50,19 @@ pub enum Input {
     },
     /// A dropdown input
     Dropdown {
+        /// Label to be shown at left. If value is `None`, a default of the form $x_N$ will be shown.
+        label: Option<String>,
         /// Set of options to include in the dropdown
         options: Vec<f64>,
         /// Initial value to show for the dropdown
         initial_value: usize,
+    },
+    /// A dropdown input
+    Tab {
+        /// Label to be shown on tab
+        label: String,
+        /// List of inputs to be shown in tab
+        inputs: Vec<Input>,
     },
 }
 
@@ -58,7 +79,10 @@ impl Default for Teaser {
         Self {
             title: "Demo".to_string(),
             description: "".to_string(),
-            inputs: vec![Input::Number(0.0)],
+            inputs: vec![Input::Number {
+                label: None,
+                initial_value: 0.0,
+            }],
             function: Box::new(|x| x[0]),
         }
     }
@@ -104,18 +128,23 @@ impl Teaser {
                 "{} {}",
                 html,
                 match input {
-                    Input::Number(iv) => add_number(idx, iv),
-                    Input::Text(iv) => add_text(idx, iv),
+                    Input::Number { initial_value, .. } => add_number(idx, initial_value),
+                    Input::Text { initial_value, .. } => add_text(idx, initial_value),
                     Input::Slider {
                         min,
                         max,
                         step,
                         initial_value,
+                        ..
                     } => add_slider(idx, initial_value, max, min, step),
                     Input::Dropdown {
                         initial_value,
                         options,
+                        ..
                     } => add_dropdown(idx, initial_value, options),
+                    _ => {
+                        "".to_string()
+                    }
                 }
             );
         }

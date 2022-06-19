@@ -8,20 +8,22 @@ fn main() {
         .with_title("Linear Regression".to_string())
         .with_description(format!("This demonstration runs a <a href=\"https://smartcorelib.org/\">Smartcore</a> model and shows the results in real time."))
         .with_inputs(vec![
-            Input::Number(234.289),
-            Input::Number(235.6),
+            Input::Number{ label: Some("GNP".to_string()), initial_value: 234.289},
+            Input::Number{ label: Some("Unemployment".to_string()), initial_value: 235.6},
             Input::Dropdown {
+                label: Some("Size of Armed Forces".to_string()),
                 options: (140..300).step_by(5).map(f64::from).collect(),
                 initial_value: 0,
             },
-            Input::Number(107.608),
+            Input::Number{label: Some("Population".to_string()), initial_value: 107.608},
             Input::Slider {
+                label: Some("Year".to_string()),
                 min: 1940.0,
                 max: 1970.0,
                 step: 0.33,
                 initial_value: 1947.0,
             },
-            Input::Number(60.323),
+            Input::Number{label: Some("Total Employment".to_string()), initial_value: 60.323},
         ])
         .with_function(move |x| {
             let xx = DenseMatrix::from_2d_vec(&vec![x; 1]);
