@@ -15,6 +15,8 @@ use wry::{
     webview::{WebView, WebViewAttributes, WebViewBuilder},
 };
 
+pub mod cookbook;
+
 mod html_chunks;
 use html_chunks::{add_dropdown, add_number, add_slider, add_text, beginning, end};
 

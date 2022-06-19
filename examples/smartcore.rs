@@ -26,8 +26,7 @@ fn main() {
             Input::Number{label: Some("Total Employment".to_string()), initial_value: 60.323},
         ])
         .with_function(move |x| {
-            let xx = DenseMatrix::from_2d_vec(&vec![x; 1]);
-            model.predict(&xx).unwrap()[0]
+            model.predict(&DenseMatrix::from_2d_vec(&vec![x; 1])).unwrap()[0]
         }).run();
 }
 
