@@ -25,7 +25,7 @@
 //! This will make the GUI look as follows. And it works! We can add numbers together!
 //! ![](https://raw.githubusercontent.com/cmccomb/tease/master/assets/addition_basic.png)
 //!
-//! We can spruce this up a little bit by adding a description header and a short description of
+//! We can spruce this up a little bit by adding a descriptive header and a short description of
 //! what the GUI does. Our code now becomes:
 //! ```rust, no_run
 #![doc = include_str!("../examples/addition.rs")]
