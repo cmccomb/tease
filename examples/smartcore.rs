@@ -6,28 +6,46 @@ fn main() {
     let model = train_linear_regression();
     Teaser::default()
         .with_title("Linear Regression".to_string())
-        .with_description("This demonstration runs a <a href=\"https://smartcorelib.org/\">Smartcore</a> model and shows the results in real time.".to_string())
+        .with_description(
+            "This demonstration runs a <a href=\"https://smartcorelib.org/\"> Smartcore</a> model and shows the results in real time."
+                .to_string(),
+        )
         .with_inputs(vec![
-            Input::Number{ label: Some("GNP".to_string()), initial_value: 234.289},
-            Input::Number{ label: Some("Unemployment".to_string()), initial_value: 235.6},
-            Input::Dropdown {
+            Input::Number {
+                label: Some("GNP".to_string()),
+                initial_value: 234.289,
+            },
+            Input::Number {
+                label: Some("Unemployment".to_string()),
+                initial_value: 235.6,
+            },
+            Input::Slider {
                 label: Some("Size of Armed Forces".to_string()),
-                options: (140..300).step_by(5).map(f64::from).collect(),
+                min: 140.0,
+                max: 300.0,
+                step: 0.1,
+                initial_value: 200.0,
+            },
+            Input::Number {
+                label: Some("Population".to_string()),
+                initial_value: 107.608,
+            },
+            Input::Dropdown {
+                label: Some("Year".to_string()),
+                options: (1940..2022).step_by(1).map(f64::from).collect(),
                 initial_value: 0,
             },
-            Input::Number{label: Some("Population".to_string()), initial_value: 107.608},
-            Input::Slider {
-                label: Some("Year".to_string()),
-                min: 1940.0,
-                max: 1970.0,
-                step: 0.33,
-                initial_value: 1947.0,
+            Input::Number {
+                label: Some("Total Employment".to_string()),
+                initial_value: 60.323,
             },
-            Input::Number{label: Some("Total Employment".to_string()), initial_value: 60.323},
         ])
         .with_function(move |x| {
-            model.predict(&DenseMatrix::from_2d_vec(&vec![x; 1])).unwrap()[0]
-        }).run();
+            model
+                .predict(&DenseMatrix::from_2d_vec(&vec![x; 1]))
+                .unwrap()[0]
+        })
+        .run();
 }
 
 pub fn train_linear_regression() -> LinearRegression<f64, DenseMatrix<f64>> {
