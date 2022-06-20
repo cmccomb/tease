@@ -17,7 +17,7 @@
 //!
 //! fn main() {
 //!     Teaser::default()
-//!         .with_inputs(vec![Input::Number{label: None, initial_value: 0.0}; 2])
+//!         .with_inputs(vec![Input::default(); 2])
 //!         .with_function(move |x| x.iter().sum())
 //!         .run();
 //! }
@@ -34,6 +34,7 @@
 //! ![](https://raw.githubusercontent.com/cmccomb/tease/master/assets/addition.png)
 //!
 //! ## Input Types
+//! `tease` provides a variety of different input types for flexible interface creation.
 //! ### Numbers
 //! ### Sliders
 //! ### Dropdowns
@@ -45,3 +46,4 @@
 #![doc = include_str!("../examples/smartcore.rs")]
 //! ```
 //! ![](https://raw.githubusercontent.com/cmccomb/tease/master/assets/smartcore.png)
+//!

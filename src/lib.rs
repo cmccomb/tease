@@ -68,10 +68,47 @@ pub enum Input {
     },
 }
 
-#[derive(Clone)]
-/// Types of outputs for the model
-pub enum Output {
-    Number { format: String },
+impl Input {
+    fn get_html(&self, idx: usize) -> String {
+        match self {
+            Input::Number {
+                initial_value,
+                label,
+            } => add_number(idx, initial_value, label),
+            Input::Text {
+                initial_value,
+                label,
+            } => add_text(idx, initial_value, label),
+            Input::Slider {
+                min,
+                max,
+                step,
+                initial_value,
+                label,
+            } => add_slider(idx, initial_value, max, min, step, label),
+            Input::Dropdown {
+                initial_value,
+                options,
+                label,
+            } => add_dropdown(idx, initial_value, options, label),
+            Input::Tab { label, inputs } => {
+                let mut html = "however a tab starts".to_string();
+                for (jdx, input) in inputs.iter().enumerate() {
+                    html = format!("{} {}", html, input.get_html(jdx));
+                }
+                format!("{} however a tab ends", html)
+            }
+        }
+    }
+}
+
+impl Default for Input {
+    fn default() -> Self {
+        Input::Number {
+            label: None,
+            initial_value: 0.0,
+        }
+    }
 }
 
 /// Construct a teaser to demonstrate your model
@@ -87,10 +124,7 @@ impl Default for Teaser {
         Self {
             title: "Demo".to_string(),
             description: "".to_string(),
-            inputs: vec![Input::Number {
-                label: None,
-                initial_value: 0.0,
-            }],
+            inputs: vec![Input::default()],
             function: Box::new(|x| x[0]),
         }
     }
@@ -132,35 +166,7 @@ impl Teaser {
 
         let mut html = beginning(self.description);
         for (idx, input) in self.inputs.iter().enumerate() {
-            html = format!(
-                "{} {}",
-                html,
-                match input {
-                    Input::Number {
-                        initial_value,
-                        label,
-                    } => add_number(idx, initial_value, label),
-                    Input::Text {
-                        initial_value,
-                        label,
-                    } => add_text(idx, initial_value, label),
-                    Input::Slider {
-                        min,
-                        max,
-                        step,
-                        initial_value,
-                        label,
-                    } => add_slider(idx, initial_value, max, min, step, label),
-                    Input::Dropdown {
-                        initial_value,
-                        options,
-                        label,
-                    } => add_dropdown(idx, initial_value, options, label),
-                    _ => {
-                        "".to_string()
-                    }
-                }
-            );
+            html = format!("{} {}", html, input.get_html(idx));
         }
         html = format!("{} {}", html, end());
 

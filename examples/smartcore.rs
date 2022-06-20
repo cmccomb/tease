@@ -6,7 +6,7 @@ fn main() {
     let model = train_linear_regression();
     Teaser::default()
         .with_title("Linear Regression".to_string())
-        .with_description(format!("This demonstration runs a <a href=\"https://smartcorelib.org/\">Smartcore</a> model and shows the results in real time."))
+        .with_description("This demonstration runs a <a href=\"https://smartcorelib.org/\">Smartcore</a> model and shows the results in real time.".to_string())
         .with_inputs(vec![
             Input::Number{ label: Some("GNP".to_string()), initial_value: 234.289},
             Input::Number{ label: Some("Unemployment".to_string()), initial_value: 235.6},
