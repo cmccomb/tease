@@ -68,6 +68,12 @@ pub enum Input {
     },
 }
 
+#[derive(Clone)]
+/// Types of outputs for the model
+pub enum Output {
+    Number { format: String },
+}
+
 /// Construct a teaser to demonstrate your model
 pub struct Teaser {
     title: String,
@@ -130,20 +136,26 @@ impl Teaser {
                 "{} {}",
                 html,
                 match input {
-                    Input::Number { initial_value, .. } => add_number(idx, initial_value),
-                    Input::Text { initial_value, .. } => add_text(idx, initial_value),
+                    Input::Number {
+                        initial_value,
+                        label,
+                    } => add_number(idx, initial_value, label),
+                    Input::Text {
+                        initial_value,
+                        label,
+                    } => add_text(idx, initial_value, label),
                     Input::Slider {
                         min,
                         max,
                         step,
                         initial_value,
-                        ..
-                    } => add_slider(idx, initial_value, max, min, step),
+                        label,
+                    } => add_slider(idx, initial_value, max, min, step, label),
                     Input::Dropdown {
                         initial_value,
                         options,
-                        ..
-                    } => add_dropdown(idx, initial_value, options),
+                        label,
+                    } => add_dropdown(idx, initial_value, options, label),
                     _ => {
                         "".to_string()
                     }

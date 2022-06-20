@@ -1,15 +1,22 @@
-pub(crate) fn add_number(index: usize, initial_value: &f64) -> String {
+pub(crate) fn add_number(index: usize, initial_value: &f64, label: &Option<String>) -> String {
+    let html_label = match label {
+        None => {
+            format!("x<sub>{index}</sub> = ")
+        }
+        Some(string) => string.to_string(),
+    };
+
     format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-2 col-form-label mt-3\"><i>x<sub>{index}</sub> = </i></label>\
-    <div class=\"col-sm-10 mt-3\">\
+    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>{html_label}</i></label>\
+    <div class=\"col-sm-9 mt-3\">\
         <input type=\"text\" class=\"form-control input\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\">\
     </div>")
 }
 
-pub(crate) fn add_text(index: usize, initial_value: &str) -> String {
+pub(crate) fn add_text(index: usize, initial_value: &str, label: &Option<String>) -> String {
     format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-2 col-form-label mt-3\"><i>x<sub>{index}</sub> = </i></label>\
-    <div class=\"col-sm-10 mt-3\">\
+    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>x<sub>{index}</sub> = </i></label>\
+    <div class=\"col-sm-9 mt-3\">\
         <input type=\"text\" class=\"form-control input\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\">\
     </div>")
 }
@@ -20,10 +27,17 @@ pub(crate) fn add_slider(
     max: &f64,
     min: &f64,
     step: &f64,
+    label: &Option<String>,
 ) -> String {
+    let html_label = match label {
+        None => {
+            format!("x<sub>{index}</sub> = ")
+        }
+        Some(string) => string.to_string(),
+    };
     format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-2 col-form-label mt-3\"><i>x<sub>{index}</sub> = </i></label>\
-    <div class=\"col-sm-10 mt-3 form-group\" style=\"display: flex\">\
+    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>{html_label}</i></label>\
+    <div class=\"col-sm-9 mt-3 form-group\" style=\"display: flex\">\
         <input type=\"text\" class=\"form-control col-sm-2\" value=\"{initial_value}\" readonly>
         <span class=\"col-sm-1\" ></span>
         <input type=\"range\" class=\"form-control input col-sm-9\" min=\"{min}\" max=\"{max}\" step=\"{step}\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\" oninput=\"this.previousElementSibling.previousElementSibling.value = this.value\">\
@@ -34,10 +48,17 @@ pub(crate) fn add_dropdown(
     index: usize,
     initial_value_index: &usize,
     options: &Vec<f64>,
+    label: &Option<String>,
 ) -> String {
+    let html_label = match label {
+        None => {
+            format!("x<sub>{index}</sub> = ")
+        }
+        Some(string) => string.to_string(),
+    };
     let mut output = format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-2 col-form-label mt-3\"><i>x<sub>{index}</sub> = </i></label>\
-    <div class=\"col-sm-10 mt-3\">\
+    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>{html_label}</i></label>\
+    <div class=\"col-sm-9 mt-3\">\
         <select class=\" form-control input\" aria-label=\"Default select example\">");
 
     for (idx, option) in options.iter().enumerate() {
@@ -86,8 +107,8 @@ pub(crate) fn end() -> String {
                             </div>
 
                             <div class=\"form-group row\" id=\"output-group\">
-                                <label for=\"output\" class=\"col-sm-2 col-form-label\"><i>y = </i></label>
-                                <div class=\"col-sm-10\">
+                                <label for=\"output\" class=\"col-sm-3 col-form-label\"><i>y = </i></label>
+                                <div class=\"col-sm-9\">
                                     <input type=\"text\" class=\"form-control\" id=\"output\" name=\"output\" aria-describedby=\"output\" readonly>
                                 </div>
                             </div>
