@@ -18,7 +18,7 @@ use wry::{
 pub mod cookbook;
 
 mod html_chunks;
-use html_chunks::{add_dropdown, add_number, add_slider, add_text, beginning, end};
+use html_chunks::{add_dropdown, add_number, add_slider, beginning, end};
 
 #[derive(Clone)]
 /// Types of inputs for the model
@@ -29,13 +29,6 @@ pub enum Input {
         label: Option<String>,
         /// Initial value to shown in the textbox
         initial_value: f64,
-    },
-    /// A text input
-    Text {
-        /// Label to be shown at left. If value is `None`, a default of the form $x_N$ will be shown.
-        label: Option<String>,
-        /// Initial value to shown in the textbox
-        initial_value: String,
     },
     /// A slider input
     Slider {
@@ -75,10 +68,6 @@ impl Input {
                 initial_value,
                 label,
             } => add_number(idx, initial_value, label),
-            Input::Text {
-                initial_value,
-                label,
-            } => add_text(idx, initial_value, label),
             Input::Slider {
                 min,
                 max,

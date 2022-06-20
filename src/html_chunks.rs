@@ -13,14 +13,6 @@ pub(crate) fn add_number(index: usize, initial_value: &f64, label: &Option<Strin
     </div>")
 }
 
-pub(crate) fn add_text(index: usize, initial_value: &str, label: &Option<String>) -> String {
-    format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>x<sub>{index}</sub> = </i></label>\
-    <div class=\"col-sm-9 mt-3\">\
-        <input type=\"text\" class=\"form-control input\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\">\
-    </div>")
-}
-
 pub(crate) fn add_slider(
     index: usize,
     initial_value: &f64,
