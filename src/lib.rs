@@ -4,8 +4,7 @@
 #![warn(clippy::missing_docs_in_private_items)]
 #![doc = include_str!("../README.md")]
 
-use std::fmt::Formatter;
-use std::{cell::RefCell, collections::HashMap, fmt};
+use std::{cell::RefCell, collections::HashMap};
 
 use wry::{
     application::{
