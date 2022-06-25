@@ -1,16 +1,15 @@
 pub(crate) fn add_number(index: usize, initial_value: &f64, label: &Option<String>) -> String {
     let html_label = match label {
         None => {
-            format!("x<sub>{index}</sub> = ")
+            format!("Input {index}")
         }
         Some(string) => string.to_string(),
     };
 
     format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>{html_label}</i></label>\
-    <div class=\"col-sm-9 mt-3\">\
-        <input type=\"text\" class=\"form-control input\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\">\
-    </div>")
+    <label for=\"exampleInput{index}\" class=\"col-form-label mt-3\"><i>{html_label}</i></label>\
+    <input type=\"text\" class=\"form-control input\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\">\
+    ")
 }
 
 pub(crate) fn add_slider(
@@ -28,12 +27,12 @@ pub(crate) fn add_slider(
         Some(string) => string.to_string(),
     };
     format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>{html_label}</i></label>\
-    <div class=\"col-sm-9 mt-3 form-group\" style=\"display: flex\">\
-        <input type=\"text\" class=\"form-control col-sm-2\" value=\"{initial_value}\" readonly>
-        <span class=\"col-sm-1\" ></span>
-        <input type=\"range\" class=\"form-control input col-sm-9\" min=\"{min}\" max=\"{max}\" step=\"{step}\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\" oninput=\"this.previousElementSibling.previousElementSibling.value = this.value\">\
-    </div>")
+    <label for=\"exampleInput{index}\" class=\"col-form-label mt-3\"><i>{html_label}</i></label>\
+    <div class=\"form-group mb-0\" style=\"display: flex\">\
+    <input type=\"text\" class=\"form-control col-sm-3 \" value=\"{initial_value}\" readonly>
+    <span class=\"col-sm-1\" ></span>
+    <input type=\"range\" class=\"form-control input col-sm-8\" min=\"{min}\" max=\"{max}\" step=\"{step}\" id=\"exampleInput{index}\" name=\"x{index}\" aria-describedby=\"input6\" placeholder=\"x{index}\" value=\"{initial_value}\" oninput=\"this.previousElementSibling.previousElementSibling.value = this.value\">\
+   </div>")
 }
 
 pub(crate) fn add_dropdown(
@@ -48,10 +47,11 @@ pub(crate) fn add_dropdown(
         }
         Some(string) => string.to_string(),
     };
-    let mut output = format!("\
-    <label for=\"exampleInput{index}\" class=\"col-sm-3 col-form-label mt-3\"><i>{html_label}</i></label>\
-    <div class=\"col-sm-9 mt-3\">\
-        <select class=\" form-control input\" aria-label=\"Default select example\">");
+    let mut output = format!(
+        "\
+    <label for=\"exampleInput{index}\" class=\"col-form-label mt-3\"><i>{html_label}</i></label>\
+        <select class=\" form-control input\" aria-label=\"Default select example\">"
+    );
 
     for (idx, option) in options.iter().enumerate() {
         if idx == *initial_value_index {
@@ -63,7 +63,7 @@ pub(crate) fn add_dropdown(
             output = format!("{}<option value=\"{option}\">{option}</option>", output)
         }
     }
-    output = format!("{}, </select></div>", output);
+    output = format!("{}, </select>", output);
     output
 }
 
@@ -86,9 +86,9 @@ pub(crate) fn beginning(description: String) -> String {
         <body>
             <div class=\"container\">
                 <p class=\"mt-3 text-center\">{description}</p>
-                <div class=\"row mt-3\">
-                    <div class=\"col text-center\">
-                        <form action=\"#\" method=\"POST\" onsubmit=\"run_calculation()\">
+                <div class=\"row my-3\">
+                    <div class=\"col text-center bg-light mr-1\">
+                        <form class=\"m-3\" action=\"#\" method=\"POST\" onsubmit=\"run_calculation()\">
                             <div class=\"form-group row\" id=\"input-group\">")
 }
 
@@ -99,17 +99,17 @@ pub(crate) fn end() -> String {
 
     format!("                        </div>
 
-                            <div class=\"form-group\" id=\"submit\">
+                            <div class=\"form-group \" id=\"submit\">
                                 <button type=\"submit\" class=\"btn btn-primary\">Submit</button>
                             </div>
-
-                            <div class=\"form-group row\" id=\"output-group\">
-                                <label for=\"output\" class=\"col-sm-3 col-form-label\"><i>y = </i></label>
-                                <div class=\"col-sm-9\">
-                                    <input type=\"text\" class=\"form-control\" id=\"output\" name=\"output\" aria-describedby=\"output\" readonly>
-                                </div>
-                            </div>
                         </form>
+                    </div>
+
+                    <div class=\"col bg-light ml-1\">
+                        <div class=\"form-group m-3\" id=\"output-group\">
+                            <label for=\"output\" class=\"col-form-label mt-3\"><i>Result</i></label>
+                            <input type=\"text\" class=\"form-control\" id=\"output\" name=\"output\" aria-describedby=\"output\" readonly>
+                        </div>
                     </div>
                 </div>
             </div>
