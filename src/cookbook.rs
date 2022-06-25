@@ -34,10 +34,10 @@
 //! ![](https://raw.githubusercontent.com/cmccomb/tease/master/assets/addition.png)
 //!
 //! ## Input Types
-//! `tease` provides a variety of different input types for flexible interface creation.
-//! ### Numbers
-//! ### Sliders
-//! ### Dropdowns
+//! `tease` provides a variety of different input types for flexible interface creation. These include
+//! 1. Numbers
+//! 2. Sliders
+//! 3. Dropdowns
 //! ## Fun with Closures
 //! By now, you've probably realized something - anything that you can fit in a closure can be used
 //! as the backend for a GUI. For instance, you can train a model in [SmartCore](https://smartcorelib.org/)
