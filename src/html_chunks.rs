@@ -1,3 +1,5 @@
+// use crate::Output;
+
 pub(crate) fn add_number(index: usize, initial_value: &f64, label: &Option<String>) -> String {
     let html_label = match label {
         None => {
@@ -22,7 +24,7 @@ pub(crate) fn add_slider(
 ) -> String {
     let html_label = match label {
         None => {
-            format!("x<sub>{index}</sub> = ")
+            format!("Input {index}")
         }
         Some(string) => string.to_string(),
     };
@@ -43,7 +45,7 @@ pub(crate) fn add_dropdown(
 ) -> String {
     let html_label = match label {
         None => {
-            format!("x<sub>{index}</sub> = ")
+            format!("Input {index}")
         }
         Some(string) => string.to_string(),
     };
@@ -92,12 +94,8 @@ pub(crate) fn beginning(description: String) -> String {
                             <div class=\"form-group row\" id=\"input-group\">")
 }
 
-pub(crate) fn end() -> String {
-    let jquery = include_str!("bootstrap/jquery-3.3.1.slim.min.js");
-    let popper = include_str!("bootstrap/popper.min.js");
-    let bootstrap = include_str!("bootstrap/bootstrap.min.js");
-
-    format!("                        </div>
+pub(crate) fn middle() -> String {
+    "                        </div>
 
                             <div class=\"form-group \" id=\"submit\">
                                 <button type=\"submit\" class=\"btn btn-primary\">Submit</button>
@@ -106,10 +104,17 @@ pub(crate) fn end() -> String {
                     </div>
 
                     <div class=\"col bg-light ml-1\">
-                        <div class=\"form-group m-3\" id=\"output-group\">
-                            <label for=\"output\" class=\"col-form-label mt-3\"><i>Result</i></label>
-                            <input type=\"text\" class=\"form-control\" id=\"output\" name=\"output\" aria-describedby=\"output\" readonly>
-                        </div>
+                        <div class=\"form-group m-3\" id=\"output-group\">"
+        .to_string()
+}
+
+pub(crate) fn end() -> String {
+    let jquery = include_str!("bootstrap/jquery-3.3.1.slim.min.js");
+    let popper = include_str!("bootstrap/popper.min.js");
+    let bootstrap = include_str!("bootstrap/bootstrap.min.js");
+
+    format!(
+        "                    </div>
                     </div>
                 </div>
             </div>
@@ -118,5 +123,6 @@ pub(crate) fn end() -> String {
             <script>{popper}</script>
             <script>{bootstrap}</script>
         </body>
-    </html>")
+    </html>"
+    )
 }
