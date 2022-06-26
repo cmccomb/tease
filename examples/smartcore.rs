@@ -11,9 +11,6 @@ fn main() {
                 .to_string(),
         )
         .with_output(
-
-
-
             Output::Number{
             label: Some("Total Employment".to_string()), precision: 1 })
         .with_inputs(vec![
