@@ -18,7 +18,7 @@
 //! fn main() {
 //!     Teaser::default()
 //!         .with_inputs(vec![Input::default(); 2])
-//!         .with_function(move |x| x.iter().sum())
+//!         .with_function(move |x: Vec<f32> | x.iter().sum())
 //!         .run();
 //! }
 //! ```
