@@ -1,5 +1,7 @@
-use smartcore::linalg::naive::dense_matrix::DenseMatrix;
-use smartcore::linear::linear_regression::{LinearRegression, LinearRegressionParameters};
+use smartcore::{
+    linalg::naive::dense_matrix::DenseMatrix,
+    linear::linear_regression::{LinearRegression, LinearRegressionParameters},
+};
 use tease::{Input, Output, Teaser};
 
 fn main() {

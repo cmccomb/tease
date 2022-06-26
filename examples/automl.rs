@@ -1,16 +1,12 @@
-use automl;
-use smartcore;
-use tease;
-use tease::Input;
+use automl::{Settings, SupervisedModel};
+use smartcore::dataset::diabetes;
+use tease::{Input, Teaser};
 
 fn main() {
-    let mut model = automl::SupervisedModel::new(
-        smartcore::dataset::diabetes::load_dataset(),
-        automl::Settings::default_regression(),
-    );
+    let mut model = SupervisedModel::new(diabetes::load_dataset(), Settings::default_regression());
 
     model.train();
-    tease::Teaser::default()
+    Teaser::default()
         .with_function(move |x| {
             let y: Vec<f32> = x.iter().map(|el| *el as f32).collect();
             model.predict(vec![y; 1])[0] as f64
