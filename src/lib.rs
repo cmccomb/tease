@@ -32,7 +32,7 @@ pub enum Input {
         initial_value: f64,
     },
     // /// A textual input
-    // Text {
+    // TextBox {
     //     /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
     //     label: Option<String>,
     //     /// Initial value to shown in the textbox
@@ -60,6 +60,12 @@ pub enum Input {
         /// Initial value to show for the dropdown
         initial_value: usize,
     },
+    // Checkbox,
+    // CheckboxGroup,
+    // Image,
+    // Video,
+    // Audio,
+    // File,
     // /// A radio button selector
     // Radio {
     //     /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
@@ -71,24 +77,8 @@ pub enum Input {
     // File {
     //     /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
     //     label: Option<String>,
-    //     /// Type of file. If value is `None`, not preview of file will be given.
-    //     filetype: Option<TypeOfFile>,
     // },
 }
-
-// /// File types with custom file previews
-// #[derive(Clone)]
-// #[non_exhaustive]
-// pub enum TypeOfFile {
-//     /// Reads and previews image files
-//     Image,
-//     /// Reads and previews audio files
-//     Audio,
-//     /// Reads and previews 3D models
-//     Model,
-//     /// Reads and previews CSVs
-//     CSV,
-// }
 
 impl Input {
     fn get_html(&self, idx: usize) -> String {
