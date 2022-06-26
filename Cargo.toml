@@ -15,6 +15,7 @@ exclude = ["assets/"]
 
 [dependencies]
 wry = "0.18.2"
+num-traits = "0.2.15"
 
 [dev-dependencies]
 smartcore = "0.2.1"

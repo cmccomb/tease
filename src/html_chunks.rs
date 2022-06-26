@@ -1,6 +1,11 @@
-// use crate::Output;
+use num_traits::Float;
+use std::fmt::Display;
 
-pub(crate) fn add_number(index: usize, initial_value: &f64, label: &Option<String>) -> String {
+pub(crate) fn add_number<F: Float + Display>(
+    index: usize,
+    initial_value: &F,
+    label: &Option<String>,
+) -> String {
     let html_label = match label {
         None => {
             format!("Input {index}")
@@ -14,12 +19,12 @@ pub(crate) fn add_number(index: usize, initial_value: &f64, label: &Option<Strin
     ")
 }
 
-pub(crate) fn add_slider(
+pub(crate) fn add_slider<F: Float + Display>(
     index: usize,
-    initial_value: &f64,
-    max: &f64,
-    min: &f64,
-    step: &f64,
+    initial_value: &F,
+    max: &F,
+    min: &F,
+    step: &F,
     label: &Option<String>,
 ) -> String {
     let html_label = match label {
@@ -37,10 +42,10 @@ pub(crate) fn add_slider(
    </div>")
 }
 
-pub(crate) fn add_dropdown(
+pub(crate) fn add_dropdown<F: Float + Display>(
     index: usize,
     initial_value_index: &usize,
-    options: &Vec<f64>,
+    options: &Vec<F>,
     label: &Option<String>,
 ) -> String {
     let html_label = match label {

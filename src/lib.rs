@@ -4,7 +4,12 @@
 #![warn(clippy::missing_docs_in_private_items)]
 #![doc = include_str!("../README.md")]
 
-use std::{cell::RefCell, collections::HashMap};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use wry::{
     application::{
@@ -15,6 +20,8 @@ use wry::{
     webview::{WebView, WebViewAttributes, WebViewBuilder},
 };
 
+use num_traits::{zero, Float};
+
 pub mod cookbook;
 
 mod html_chunks;
@@ -23,13 +30,13 @@ use html_chunks::{add_dropdown, add_number, add_slider, beginning, end, middle};
 /// Types of inputs for the model
 #[derive(Clone)]
 #[non_exhaustive]
-pub enum Input {
+pub enum Input<F: Float + Display> {
     /// A numerical input
     Number {
         /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
         label: Option<String>,
         /// Initial value to shown in the textbox
-        initial_value: f64,
+        initial_value: F,
     },
     // /// A textual input
     // TextBox {
@@ -43,20 +50,20 @@ pub enum Input {
         /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
         label: Option<String>,
         /// Minimum value at far left of slider
-        min: f64,
+        min: F,
         /// Maximum value at far right of slider
-        max: f64,
+        max: F,
         /// Step size between minimum and maximum
-        step: f64,
+        step: F,
         /// Initial value to show on the slider
-        initial_value: f64,
+        initial_value: F,
     },
     /// A dropdown input
     Dropdown {
         /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
         label: Option<String>,
         /// Set of options to include in the dropdown
-        options: Vec<f64>,
+        options: Vec<F>,
         /// Initial value to show for the dropdown
         initial_value: usize,
     },
@@ -80,7 +87,7 @@ pub enum Input {
     // },
 }
 
-impl Input {
+impl<F: Float + Display> Input<F> {
     fn get_html(&self, idx: usize) -> String {
         match self {
             Input::Number {
@@ -112,11 +119,11 @@ impl Input {
     }
 }
 
-impl Default for Input {
+impl<F: Float + Display> Default for Input<F> {
     fn default() -> Self {
         Input::Number {
             label: None,
-            initial_value: 0.0,
+            initial_value: zero(),
         }
     }
 }
@@ -177,15 +184,15 @@ impl Output {
 }
 
 /// Construct a teaser to demonstrate your model
-pub struct Teaser {
+pub struct Teaser<F: Float + Display> {
     title: String,
     description: String,
-    inputs: Vec<Input>,
+    inputs: Vec<Input<F>>,
     output: Output,
-    function: Box<dyn 'static + Fn(Vec<f64>) -> f64>,
+    function: Box<dyn 'static + Fn(Vec<F>) -> F>,
 }
 
-impl Default for Teaser {
+impl<F: Float + Display> Default for Teaser<F> {
     fn default() -> Self {
         Self {
             title: "Demo".to_string(),
@@ -197,7 +204,7 @@ impl Default for Teaser {
     }
 }
 
-impl Teaser {
+impl<F: 'static + Float + Display + FromStr> Teaser<F> {
     /// Add a title to the GUI
     pub fn with_title(mut self, title: String) -> Self {
         self.title = title;
@@ -211,7 +218,7 @@ impl Teaser {
     }
 
     /// Specify the inputs
-    pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
+    pub fn with_inputs(mut self, inputs: Vec<Input<F>>) -> Self {
         self.inputs = inputs;
         self
     }
@@ -223,16 +230,19 @@ impl Teaser {
     }
 
     /// Specify the function to use
-    pub fn with_function<F>(mut self, predictor: F) -> Self
+    pub fn with_function<G>(mut self, predictor: G) -> Self
     where
-        F: 'static + Fn(Vec<f64>) -> f64,
+        G: 'static + Fn(Vec<F>) -> F,
     {
         self.function = Box::new(predictor);
         self
     }
 
     /// Run the GUI
-    pub fn run(self) {
+    pub fn run(self)
+    where
+        <F as FromStr>::Err: Debug,
+    {
         thread_local! {
             static WEBVIEW: RefCell<HashMap<usize, WebView>> = RefCell::new(HashMap::new());
         }
@@ -258,7 +268,7 @@ impl Teaser {
             .unwrap()
             .with_ipc_handler(move |_window: &Window, req: String| {
                 let number_strings = req.split(",");
-                let mut inputs = vec![0.0; 0];
+                let mut inputs = vec![zero(); 0];
                 for number in number_strings {
                     inputs.push(number.parse().unwrap());
                 }
