@@ -22,6 +22,7 @@ use html_chunks::{add_dropdown, add_number, add_slider, beginning, end, middle};
 
 /// Types of inputs for the model
 #[derive(Clone)]
+#[non_exhaustive]
 pub enum Input {
     /// A numerical input
     Number {
@@ -77,6 +78,7 @@ pub enum Input {
 
 // /// File types with custom file previews
 // #[derive(Clone)]
+// #[non_exhaustive]
 // pub enum TypeOfFile {
 //     /// Reads and previews image files
 //     Image,
@@ -116,7 +118,6 @@ impl Input {
             //     },
             //     None => "".to_string(),
             // },
-            _ => "".to_string(),
         }
     }
 }
@@ -131,11 +132,14 @@ impl Default for Input {
 }
 
 /// Types of outputs for the model
+#[derive(Clone)]
+#[non_exhaustive]
 pub enum Output {
     /// A numerical input
     Number {
         /// Label to be shown above output. If value is `None`, a default of the form _Result N_ will be shown.
         label: Option<String>,
+        precision: usize,
     },
     // Vector {
     //     label: Option<String>,
@@ -156,6 +160,7 @@ impl Default for Output {
     fn default() -> Self {
         Self::Number {
             label: Some("Result".to_string()),
+            precision: 2,
         }
     }
 }
@@ -163,7 +168,7 @@ impl Default for Output {
 impl Output {
     fn get_html(&self) -> String {
         let label = match self {
-            Output::Number { label } => match label {
+            Output::Number { label, .. } => match label {
                 None => {
                     format!("Result")
                 }
@@ -172,6 +177,12 @@ impl Output {
         };
         format!("<label for=\"output\" class=\"col-form-label mt-3\"><i>{label}</i></label>
          <input type=\"text\" class=\"form-control\" id=\"output\" name=\"output\" aria-describedby=\"output\" readonly>")
+    }
+
+    fn get_precision(&self) -> usize {
+        match self {
+            Output::Number { precision, .. } => *precision,
+        }
     }
 }
 
@@ -267,8 +278,9 @@ impl Teaser {
                     .with(|webview| {
                         let webview = webview.borrow();
                         let my_webview = webview.get(&0).unwrap();
+                        let precision = self.output.get_precision();
                         my_webview.evaluate_script(&*format!(
-                            "document.getElementById('output').value = {}",
+                            "document.getElementById('output').value = {:.precision$}",
                             y
                         ))
                     })

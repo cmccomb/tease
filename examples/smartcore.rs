@@ -10,7 +10,12 @@ fn main() {
             "This demonstration runs a <a href=\"https://smartcorelib.org/\"> Smartcore</a> model and shows the results in real time."
                 .to_string(),
         )
-        .with_output(Output::Number{label: Some("Total Employment".to_string())})
+        .with_output(
+
+
+
+            Output::Number{
+            label: Some("Total Employment".to_string()), precision: 1 })
         .with_inputs(vec![
             Input::Number {
                 label: Some("GNP Deflator".to_string()),
