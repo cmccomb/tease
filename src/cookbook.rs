@@ -35,9 +35,15 @@
 //!
 //! ## Input Types
 //! `tease` provides a variety of different input types for flexible interface creation. These include
-//! 1. Numbers
-//! 2. Sliders
-//! 3. Dropdowns
+//! ### Numbers
+//! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" src="https://raw.githubusercontent.com/cmccomb/tease/master/assets/number.html"></iframe>
+//!
+//! ### Sliders
+//! //! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" src="https://raw.githubusercontent.com/cmccomb/tease/master/assets/slider.html"></iframe>
+//!
+//! ### Dropdowns
+//! //! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" src="https://raw.githubusercontent.com/cmccomb/tease/master/assets/dropdown.html"></iframe>
+//!
 //! ## Fun with Closures
 //! By now, you've probably realized something - anything that you can fit in a closure can be used
 //! as the backend for a GUI. For instance, you can train a model in [SmartCore](https://smartcorelib.org/)
