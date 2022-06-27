@@ -36,13 +36,19 @@
 //! ## Input Types
 //! `tease` provides a variety of different input types for flexible interface creation. These include
 //! ### Numbers
-//! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" src="https://raw.githubusercontent.com/cmccomb/tease/master/assets/number.html"></iframe>
+//! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" srcdoc="
+#![doc = include_str!("../doc_chunks/number.html")]
+//! "></iframe>
 //!
 //! ### Sliders
-//! //! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" src="https://raw.githubusercontent.com/cmccomb/tease/master/assets/slider.html"></iframe>
+//! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" srcdoc="
+#![doc = include_str!("../doc_chunks/slider.html")]
+//! "></iframe>
 //!
 //! ### Dropdowns
-//! //! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" src="https://raw.githubusercontent.com/cmccomb/tease/master/assets/dropdown.html"></iframe>
+//! <iframe style="width:50%; margin-left: 25%; margin-right: 25%" srcdoc="
+#![doc = include_str!("../doc_chunks/dropdown.html")]
+//! "></iframe>
 //!
 //! ## Fun with Closures
 //! By now, you've probably realized something - anything that you can fit in a closure can be used
