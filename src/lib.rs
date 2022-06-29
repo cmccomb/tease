@@ -184,7 +184,7 @@ impl Output {
 }
 
 /// Construct a teaser to demonstrate your model
-pub struct Teaser<F: Float + Display> {
+pub struct Teaser<F: Float + Display = f32> {
     title: String,
     description: String,
     inputs: Vec<Input<F>>,
