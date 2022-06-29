@@ -201,9 +201,9 @@ impl<F: Float + Display> Default for Teaser<F> {
             description: "".to_string(),
             inputs: vec![Input::default()],
             output: Output::default(),
-            function: Box::new(|x| x[0]),
+            function: Box::new(|_| zero()),
             use_advanced_function: false,
-            advanced_function: Box::new(|x| vec![Output::default()]),
+            advanced_function: Box::new(|_| vec![Output::default()]),
         }
     }
 }
