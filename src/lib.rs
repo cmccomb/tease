@@ -30,7 +30,7 @@ use html_chunks::{add_dropdown, add_number, add_slider, beginning, end, middle};
 /// Types of inputs for the model
 #[derive(Clone)]
 #[non_exhaustive]
-pub enum Input<F: Float + Display> {
+pub enum Input<F: Float + Display = f32> {
     /// A numerical input
     Number {
         /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
@@ -190,6 +190,8 @@ pub struct Teaser<F: Float + Display = f32> {
     inputs: Vec<Input<F>>,
     output: Output,
     function: Box<dyn 'static + Fn(Vec<F>) -> F>,
+    use_advanced_function: bool,
+    advanced_function: Box<dyn 'static + Fn(Vec<Input>) -> Vec<Output>>,
 }
 
 impl<F: Float + Display> Default for Teaser<F> {
@@ -200,6 +202,8 @@ impl<F: Float + Display> Default for Teaser<F> {
             inputs: vec![Input::default()],
             output: Output::default(),
             function: Box::new(|x| x[0]),
+            use_advanced_function: false,
+            advanced_function: Box::new(|x| vec![Output::default()]),
         }
     }
 }
@@ -229,12 +233,22 @@ impl<F: 'static + Float + Display + FromStr> Teaser<F> {
         self
     }
 
-    /// Specify the function to use
+    /// Specify the function to use.
     pub fn with_function<G>(mut self, predictor: G) -> Self
     where
         G: 'static + Fn(Vec<F>) -> F,
     {
         self.function = Box::new(predictor);
+        self
+    }
+
+    /// Specify the advanced function to use (note, this will override a function added using `with_function`)
+    pub fn with_advanced_function<A>(mut self, predictor: A) -> Self
+    where
+        A: 'static + Fn(Vec<Input>) -> Vec<Output>,
+    {
+        self.use_advanced_function = true;
+        self.advanced_function = Box::new(predictor);
         self
     }
 
