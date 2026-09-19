@@ -10,12 +10,13 @@ class Element {
     removeAttribute(k) { delete this.attributes[k]; }
     addEventListener(k,fn) { (this.listeners[k]??=[]).push(fn); }
     fire(k) { (this.listeners[k]||[]).forEach(fn=>fn({preventDefault(){},target:this})); }
+    async fireAsync(k) { await Promise.all((this.listeners[k]||[]).map(fn=>fn({preventDefault(){},target:this}))); }
     focus() { this.focused=true; }
     get options() { return this.children; }
     get selectedOptions() { return this.children.filter(c=>c.selected); }
 }
 function fixture(config={}, inputs=[new Element('input')]) {
-    const nodes=Object.fromEntries(['tease-form','submit','status','error','tease-config',...inputs.map((_,i)=>`error-${i}`)].map(id=>[id,new Element()]));
+    const nodes=Object.fromEntries(['tease-form','submit','status','error','tease-config',...inputs.flatMap((_,i)=>[`error-${i}`,`preview-${i}`])].map(id=>[id,new Element()]));
     if(config.presets?.length) nodes.preset=new Element('select');
     if(config.comparison) { nodes.pin=new Element('button'); nodes.scenarios=new Element(); }
     nodes['tease-config'].textContent=JSON.stringify(config);
@@ -23,7 +24,7 @@ function fixture(config={}, inputs=[new Element('input')]) {
     const messages=[]; const window={ipc:{postMessage:m=>messages.push(m)}};
     const document={getElementById:id=>nodes[id],querySelectorAll:s=>s==='[data-input]'?inputs:outputs,createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag)};
     const context={window,document,console};
-    for(const file of ['render.js','ui.js']) runInNewContext(readFileSync(`${__dirname}/../src/${file}`,'utf8'),context);
+    for(const file of ['render.js','files.js','ui.js']) runInNewContext(readFileSync(`${__dirname}/../src/${file}`,'utf8'),context);
     return {window,nodes,outputs,inputs,messages,submit:()=>nodes['tease-form'].fire('submit')};
 }
 module.exports={Element,fixture};

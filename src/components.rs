@@ -1,4 +1,4 @@
-use crate::{ClassScore, Error, Plot};
+use crate::{ClassScore, Error, ImageData, Plot, Table};
 use serde::{Deserialize, Serialize};
 
 /// A runtime model value, distinct from a component's display configuration.
@@ -18,6 +18,10 @@ pub enum Value {
     Plot(Plot),
     /// Class scores or probabilities.
     Scores(Vec<ClassScore>),
+    /// A validated raster image.
+    Image(ImageData),
+    /// A rectangular string table.
+    Table(Table),
 }
 impl Value {
     /// Read a numerical value or return a callback-friendly error message.
@@ -25,6 +29,20 @@ impl Value {
         match self {
             Self::Number(value) => Ok(*value),
             _ => Err("Expected a numerical value.".into()),
+        }
+    }
+    /// Read an image.
+    pub fn as_image(&self) -> Result<&ImageData, String> {
+        match self {
+            Self::Image(value) => Ok(value),
+            _ => Err("Expected an image.".into()),
+        }
+    }
+    /// Read a table.
+    pub fn as_table(&self) -> Result<&Table, String> {
+        match self {
+            Self::Table(value) => Ok(value),
+            _ => Err("Expected a table.".into()),
         }
     }
     /// Read a checkbox value.
@@ -139,6 +157,16 @@ pub enum Input {
         /// Initially selected option indices, without duplicates.
         initial_values: Vec<usize>,
     },
+    /// Select a local PNG or JPEG, up to 8 MiB and 4096×4096 pixels.
+    Image {
+        /// Plain-text label.
+        label: Option<String>,
+    },
+    /// Import a UTF-8 CSV with a header and up to 1,000 data rows.
+    Table {
+        /// Plain-text label.
+        label: Option<String>,
+    },
     /// Presentation metadata around an input; use `with_unit` and `with_help`.
     Described {
         /// The underlying component.
@@ -180,6 +208,18 @@ impl Input {
             initial_value: initial_value.into(),
             multiline,
             max_length: 4096,
+        }
+    }
+    /// Create a local raster-image input.
+    pub fn image(label: impl Into<String>) -> Self {
+        Self::Image {
+            label: Some(label.into()),
+        }
+    }
+    /// Create a CSV table input.
+    pub fn table(label: impl Into<String>) -> Self {
+        Self::Table {
+            label: Some(label.into()),
         }
     }
     /// Create a checkbox.
@@ -229,6 +269,8 @@ impl Input {
         let (Self::Number { label, .. }
         | Self::Slider { label, .. }
         | Self::Dropdown { label, .. }
+        | Self::Image { label }
+        | Self::Table { label }
         | Self::Text { label, .. }
         | Self::Checkbox { label, .. }
         | Self::MultiSelect { label, .. }) = self.base()
@@ -257,6 +299,10 @@ impl Input {
     pub(crate) fn validate(&self, index: usize) -> Result<(), Error> {
         let invalid =
             |message: &str| Error::Configuration(format!("{}: {message}", self.label(index)));
+        // File inputs are intentionally empty until a user selects a file or preset.
+        if matches!(self.base(), Self::Image { .. } | Self::Table { .. }) {
+            return Ok(());
+        }
         let initial = match self.base() {
             Self::Number {
                 initial_value,
@@ -354,7 +400,7 @@ impl Input {
                         .collect::<Result<_, _>>()?,
                 )
             }
-            Self::Described { .. } => unreachable!(),
+            Self::Described { .. } | Self::Image { .. } | Self::Table { .. } => unreachable!(),
         };
         self.validate_value(index, &initial)
             .map_err(|error| invalid(&error.to_string()))
@@ -410,6 +456,19 @@ impl Input {
                     return Err(invalid("Selections must be unique available choices."));
                 }
             }
+            Self::Image { .. } => {
+                value
+                    .as_image()
+                    .map_err(|e| invalid(&e))?
+                    .bytes()
+                    .map_err(|e| invalid(&e))?;
+            }
+            Self::Table { .. } => {
+                let table = value.as_table().map_err(|e| invalid(&e))?;
+                if table.to_csv().map_err(|e| invalid(&e))?.len() > 2 * 1024 * 1024 {
+                    return Err(invalid("CSV input exceeds 2 MiB after quoting."));
+                }
+            }
             Self::Described { .. } => unreachable!(),
         }
         Ok(())
@@ -428,6 +487,8 @@ impl Input {
                     .collect::<Vec<_>>(),
             )
             .unwrap(),
+            (_, Value::Image(v)) => serde_json::to_string(v).unwrap(),
+            (_, Value::Table(v)) => v.to_csv().expect("validated table"),
             (_, Value::Text(v)) => v.clone(),
             (_, Value::Bool(v)) => v.to_string(),
             (_, Value::Number(v)) => v.to_string(),
@@ -457,6 +518,16 @@ pub enum Output {
         /// Plain-text label.
         label: Option<String>,
     },
+    /// Display a PNG or JPEG image.
+    Image {
+        /// Plain-text label and accessible description.
+        label: Option<String>,
+    },
+    /// Display a read-only table with CSV export.
+    Table {
+        /// Plain-text label.
+        label: Option<String>,
+    },
     /// Ranked class-score bars (up to 100 classes).
     Scores {
         /// Plain-text label.
@@ -479,6 +550,18 @@ impl Output {
         Self::Number {
             label: Some(label.into()),
             precision,
+        }
+    }
+    /// Define a raster-image result.
+    pub fn image(label: impl Into<String>) -> Self {
+        Self::Image {
+            label: Some(label.into()),
+        }
+    }
+    /// Define a read-only table result with CSV export.
+    pub fn table(label: impl Into<String>) -> Self {
+        Self::Table {
+            label: Some(label.into()),
         }
     }
     /// Define a plot result.
@@ -510,6 +593,8 @@ impl Output {
     pub(crate) fn label(&self, index: usize) -> String {
         let (Self::Number { label, .. }
         | Self::Text { label }
+        | Self::Image { label }
+        | Self::Table { label }
         | Self::Plot { label }
         | Self::Scores { label, .. }) = self;
         label

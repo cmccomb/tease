@@ -4,10 +4,10 @@ Turn a Rust function or machine-learning model into a standalone desktop demo.
 Tease generates labeled inputs and results in a native webview, validates input
 before calling your model, and displays prediction errors without restarting.
 
-Tease 0.3.0 uses the typed callback API introduced in 0.2. See
+Tease 0.4.0 uses the typed callback API introduced in 0.2. See
 [migration guidance](docs/migration-0.2.md) when upgrading from 0.1.1.
 
-Add it to a Rust application with `cargo add tease@0.3.0`, then put the example
+Add it to a Rust application with `cargo add tease@0.4.0`, then put the example
 below in `src/main.rs` and run `cargo run`. Install the desktop prerequisites below
 first; the GUI must run on the main thread in a desktop session.
 
@@ -80,6 +80,32 @@ results alongside their submitted inputs, then compare them with the current res
 Numerical differences use the displayed precision. Snapshots last for this window
 session. `cargo run --example exploration` demonstrates these features together.
 
+## Images and batch data (0.4)
+
+`Input::image` accepts local PNG/JPEG files; `Output::image` displays
+`Value::Image(ImageData)`. Use `ImageData::from_bytes` to validate/encode bytes and
+`bytes()` to decode/validate them for a model. Encoded files are limited to 8 MiB,
+dimensions to 4096×4096, and decoder allocation to 128 MiB. File data stays local.
+Unsupported formats and malformed images are rejected. The image example uses a
+built-in gradient, grayscale conversion, and contrast adjustment.
+
+`Input::table` imports UTF-8 CSV with a header; `Output::table` displays
+`Value::Table(Table { columns, rows })` and exports CSV. Tables support 1–64 unique,
+nonempty column names and up to 1,000 rows, with 8,192 bytes per cell and 2 MiB total
+text. CSV inputs and presets must also fit the 2 MiB encoded CSV limit. The interface previews the first 100 rows; export contains all rows. Tables
+are read-only in this release. CSV quoting preserves commas, quotes, and newlines.
+
+`Session::predict_batch` reuses the model sequentially and returns one `Result`
+per submitted row, preserving order. The batch example maps CSV rows into model
+inputs, retains row errors, and exports both successful predictions and errors.
+
+The Export CSV button opens a native Save dialog and reports save errors or
+cancellation in the interface. Linux needs a working XDG desktop portal. Formula-like text cells receive a leading apostrophe on UI export
+to keep spreadsheet applications from evaluating them; finite numerical strings
+are preserved. `Table::to_csv()` instead preserves exact cell contents for programmatic
+round trips. Pending file reads block submission; replacing a selection discards
+an older read rather than overwriting the newer selection.
+
 ## Background inference
 
 `run()` creates the model and executes predictions on a dedicated worker thread.
@@ -128,6 +154,8 @@ it is not a universal binary that runs on every operating system.
 ## Examples and checks
 
 ```sh
+cargo run --locked --example images
+cargo run --locked --example batch
 cargo run --locked --example exploration
 cargo run --locked --example addition
 cargo run --locked --example classification
@@ -141,7 +169,7 @@ cargo fmt --all --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked --all-targets
 cargo test --locked --doc
-node --test tests/ui.test.cjs tests/components.test.cjs
+node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs
 RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
 ```
 

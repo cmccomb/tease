@@ -35,6 +35,7 @@ impl Submission {
 #[derive(Debug)]
 pub(crate) enum Event {
     PageReady,
+    SaveCsv(String),
     Ready(Result<(), String>),
     Finished {
         request_id: u64,

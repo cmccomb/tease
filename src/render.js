@@ -66,11 +66,32 @@
         });
         node("p", data.probabilities ? "Model-supplied probabilities." : "Model scores; not probabilities.", parent).className = "help";
     }
+    function table(parent, data) {
+        const wrapper = node("div", undefined, parent); wrapper.className = "table-scroll";
+        const grid = node("table", undefined, wrapper);
+        const head = node("tr", undefined, node("thead", undefined, grid));
+        data.table.columns.forEach(label => node("th", label, head).setAttribute("scope", "col"));
+        const body = node("tbody", undefined, grid);
+        // A bounded preview; export always contains every row.
+        data.table.rows.slice(0,100).forEach(row => { const tr = node("tr", undefined, body); row.forEach(cell => node("td", cell, tr)); });
+        node("p", `${data.table.rows.length} rows${data.table.rows.length > 100 ? " (showing first 100)" : ""}`, parent).className = "help";
+        if (data.csv !== undefined) {
+            const button = node("button", "Export CSV", parent); button.type = "button";
+            button.addEventListener("click", () => {
+                window.tease.exportCsv(data.csv);
+            });
+        }
+    }
     function render(parent, value) {
         parent.replaceChildren();
         if (typeof value === "string") parent.textContent = value;
         else if (value.kind === "plot") plot(parent, value.plot);
         else if (value.kind === "scores") scores(parent, value);
+        else if (value.kind === "image") {
+            const img = node("img", undefined, parent); img.className = "result-image";
+            img.alt = "Model image"; img.src = `data:${value.image.mime};base64,${value.image.base64}`;
+        }
+        else if (value.kind === "table") table(parent, value);
     }
     window.teaseView = { render, node };
 })();

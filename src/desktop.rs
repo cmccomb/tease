@@ -42,6 +42,17 @@ pub(crate) fn run(demo: Teaser) -> Result<(), Error> {
                 let _ = proxy.send_event(WorkerEvent::PageReady);
                 return;
             }
+            #[derive(serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Export {
+                export_csv: String,
+            }
+            if let Ok(export) = serde_json::from_str::<Export>(request.body()) {
+                if export.export_csv.len() <= 6 * 1024 * 1024 {
+                    let _ = proxy.send_event(WorkerEvent::SaveCsv(export.export_csv));
+                }
+                return;
+            }
             match Submission::parse(request.body()) {
                 Ok(job) => {
                     let request_id = job.request_id;
@@ -79,6 +90,26 @@ pub(crate) fn run(demo: Teaser) -> Result<(), Error> {
         let _ = &window;
         *control_flow = ControlFlow::Wait;
         match event {
+            Event::UserEvent(WorkerEvent::SaveCsv(csv)) => {
+                let message = match rfd::FileDialog::new()
+                    .set_parent(&window)
+                    .set_title("Export predictions")
+                    .add_filter("CSV", &["csv"])
+                    .set_file_name("tease-results.csv")
+                    .save_file()
+                {
+                    Some(path) => match std::fs::write(&path, csv) {
+                        Ok(()) => format!("CSV saved to {}", path.display()),
+                        Err(error) => format!("Could not save CSV: {error}"),
+                    },
+                    None => "CSV export canceled.".into(),
+                };
+                let message = serde_json::to_string(&message).expect("string serialization");
+                display(
+                    &webview,
+                    &format!("window.tease.downloadFinished({message});"),
+                );
+            }
             Event::UserEvent(WorkerEvent::PageReady) if !page_ready => {
                 page_ready = true;
                 if let Some(result) = &initialization {

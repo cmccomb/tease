@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — 2026-09-19
+
+- Validated local PNG/JPEG inputs, previews, and image outputs.
+- CSV import previews, read-only result tables, and complete CSV export.
+- Sequential batch prediction with row-level results and errors.
+- Image-processing and CSV batch examples with file/format regression tests.
+
+
 ## 0.3.0 — 2026-09-19
 
 - Local line/scatter/bar plots and validated model-score/probability bars.

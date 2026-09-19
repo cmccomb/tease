@@ -5,7 +5,9 @@ mod bridge;
 mod components;
 mod desktop;
 mod html;
+mod media;
 mod rich;
+pub use media::{ImageData, Table};
 mod worker;
 pub use rich::{ClassScore, Plot, PlotKind, Preset, Series};
 
@@ -243,6 +245,11 @@ pub struct Session {
 }
 
 impl Session {
+    /// Predict rows independently, preserving row order and individual validation/model errors.
+    /// The model is reused and rows execute sequentially on the calling thread.
+    pub fn predict_batch(&self, rows: &[Vec<Value>]) -> Vec<Result<Vec<Value>, Error>> {
+        rows.iter().map(|row| self.predict(row)).collect()
+    }
     /// Validate inputs, invoke the model, and validate its results.
     ///
     /// Expected failures should be returned as `Err`. Panics propagate for
@@ -273,6 +280,8 @@ impl Session {
             match (output, value) {
                 (Output::Number { .. }, Value::Number(number)) if number.is_finite() => {}
                 (Output::Text { .. }, Value::Text(_)) => {}
+                (Output::Image { .. }, Value::Image(image)) if image.bytes().is_ok() => {}
+                (Output::Table { .. }, Value::Table(table)) if table.validate().is_ok() => {}
                 (Output::Plot { .. }, Value::Plot(plot)) if plot.validate() => {}
                 (Output::Scores { probabilities, .. }, Value::Scores(scores))
                     if !scores.is_empty()

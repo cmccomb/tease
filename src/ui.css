@@ -24,3 +24,7 @@ table { border-collapse: collapse; width: 100%; font-size: .88rem; } th, td { bo
 #comparison { margin-top: 24px; } #pin { width: auto; } #scenarios { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,360px),1fr)); gap: 16px; }
 .scenario { min-width: 0; padding: 16px; background: #f5f8fa; border-radius: 6px; } .scenario button { width: auto; }
 h2 { font-size: 1.25rem; } h3 { font-size: 1.1rem; } h4 { margin-bottom: 8px; }
+
+.result-image { display: block; max-width: 100%; max-height: 420px; object-fit: contain; margin: 12px auto; }
+.table-scroll { overflow: auto; max-height: 360px; } .table-scroll td { white-space: pre-wrap; overflow-wrap: anywhere; }
+.file-preview { margin: 8px 0; } .file-preview .result-image { max-height: 220px; }

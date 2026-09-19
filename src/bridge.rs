@@ -1,4 +1,4 @@
-use crate::{Error, Input, Output, Session, Value};
+use crate::{Error, Input, Output, Session, Table, Value};
 use serde::{Deserialize, Serialize};
 
 // Keep raw strings until Rust validates them: JavaScript Number("") is zero.
@@ -91,6 +91,13 @@ impl Session {
                                 .collect::<Result<_, _>>()?,
                         )
                     }
+                    Input::Image { .. } => Value::Image(
+                        serde_json::from_str(text)
+                            .map_err(|_| input.error(index, "Select a PNG or JPEG image."))?,
+                    ),
+                    Input::Table { .. } => {
+                        Value::Table(Table::from_csv(&raw).map_err(|e| input.error(index, &e))?)
+                    }
                     Input::Described { .. } => unreachable!(),
                 };
                 input.validate_value(index, &value)?;
@@ -129,6 +136,8 @@ impl Session {
                         (_, Value::Number(n)) => serde_json::json!(n.to_string()),
                         (Output::Plot { .. }, Value::Plot(plot)) => serde_json::json!({"kind":"plot", "plot":plot}),
                         (Output::Scores { probabilities, .. }, Value::Scores(scores)) => serde_json::json!({"kind":"scores", "probabilities":probabilities, "scores":scores}),
+                        (Output::Image { .. }, Value::Image(image)) => serde_json::json!({"kind":"image", "image":image}),
+                        (Output::Table { .. }, Value::Table(table)) => serde_json::json!({"kind":"table", "csv":table.export_csv().expect("validated table"), "table":table}),
                         _ => unreachable!("validated output"),
                     })
                     .collect(),

@@ -112,6 +112,14 @@ pub(crate) fn render(demo: &Teaser) -> String {
                 }
                 fields.push_str("</select>");
             }
+            Input::Image { .. } | Input::Table { .. } => {
+                let (kind, accept) = if matches!(input.base(), Input::Image { .. }) {
+                    ("image", "image/png,image/jpeg")
+                } else {
+                    ("table", ".csv,text/csv")
+                };
+                write!(fields,"<input data-input data-file-kind=\"{kind}\" id=\"input-{index}\" type=\"file\" accept=\"{accept}\" aria-describedby=\"help-{index} error-{index}\"><div id=\"preview-{index}\" class=\"file-preview\"></div>").unwrap();
+            }
             Input::Described { .. } => unreachable!(),
         }
         write!(
@@ -153,12 +161,13 @@ pub(crate) fn render(demo: &Teaser) -> String {
 <div class="panels"><form id="tease-form" novalidate>{preset_control}{fields}<button id="submit" type="submit">Predict</button></form>
 <section aria-label="Results" aria-live="polite">{outputs}<p id="status" role="status">Ready.</p></section></div>
 <p id="error" class="error" role="alert" tabindex="-1"></p>
-{comparison}</main><script type="application/json" id="tease-config">{config}</script><script>{render_script}</script><script>{script}</script></body></html>"#,
+<p id="download-status" role="status"></p>{comparison}</main><script type="application/json" id="tease-config">{config}</script><script>{render_script}</script><script>{file_script}</script><script>{script}</script></body></html>"#,
         title = escape(&demo.title),
         description = escape(&demo.description),
         style = include_str!("ui.css"),
         script = include_str!("ui.js"),
-        render_script = include_str!("render.js")
+        render_script = include_str!("render.js"),
+        file_script = include_str!("files.js")
     )
 }
 

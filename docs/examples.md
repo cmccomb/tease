@@ -18,6 +18,18 @@ result arrives. The native window stays responsive throughout.
 | `smartcore_classification` | Real Gaussian naive Bayes, Iris data | Leave defaults | Iris setosa |
 | `automl` | Published AutoML regression wrapper | Leave defaults | 206.12 |
 
+## Images and CSV batches (0.4)
+
+`cargo run --locked --example images`: load Gradient, predict, and inspect the
+128×128 grayscale result. Uncheck Grayscale for color; adjust Contrast to change
+pixel values. A user-selected PNG/JPEG follows the same path.
+
+`cargo run --locked --example batch`: load Mixed rows and predict. Expected results:
+x=1 gives 3, x=2 gives 5, invalid gives a row error, and x=-3 gives -5. Import a local
+CSV with the single header `x` to process your own rows. Export includes the entire
+result table, including error messages. This example is the explicit linear model
+y=2x+1; it is not a trained predictor or an accuracy benchmark.
+
 ## Visual exploration (0.3)
 
 Run `cargo run --locked --example exploration`. The analytical logistic model shows

@@ -13,8 +13,9 @@
     const pinned = [];
     let current = null, submitted = null;
     const render = (output, value) => window.teaseView ? window.teaseView.render(output, value) : output.textContent = value;
-    const read = input => input.type === "checkbox" ? String(input.checked) : input.multiple ? JSON.stringify(Array.from(input.selectedOptions, option => Number(option.value))) : input.value;
+    const read = input => input.type === "file" ? input._payload || "" : input.type === "checkbox" ? String(input.checked) : input.multiple ? JSON.stringify(Array.from(input.selectedOptions, option => Number(option.value))) : input.value;
     function describe(input) {
+        if (input.type === "file") return input._fileName || "No file selected";
         if (input.multiple) return Array.from(input.selectedOptions, option => option.textContent).join(", ") || "None";
         if (input.tagName === "SELECT") return input.selectedOptions[0]?.textContent || "";
         return read(input);
@@ -53,18 +54,21 @@
         if (preset.value === "" || !scenario) return;
         scenario.inputs.forEach((value,i) => {
             const input = inputs[i];
-            if (input.type === "checkbox") input.checked = value === "true";
+            if (input.type === "file") { input.value = ""; window.teaseFiles.apply(input,value,document.getElementById(`preview-${i}`)); }
+            else if (input.type === "checkbox") input.checked = value === "true";
             else if (input.multiple) { const selected = JSON.parse(value); Array.from(input.options).forEach(option => option.selected = selected.includes(Number(option.value))); }
             else input.value = value;
             if (input.type === "range") input.nextElementSibling.textContent = input.value;
         });
         clearErrors(); status.textContent = `Loaded ${scenario.name}. Select Predict to run.`;
+        enable(initialized && !unavailable && activeRequest === null, activeRequest !== null);
     });
     let initialized = false;
+    let unavailable = false;
     let activeRequest = null;
     let nextRequest = 0;
     function enable(enabled, busy = false) {
-        button.disabled = !enabled;
+        button.disabled = !enabled || inputs.some(input => input._reading);
         inputs.forEach(input => { input.disabled = !enabled; });
         if (preset) preset.disabled = !enabled;
         form.setAttribute("aria-busy", String(busy));
@@ -79,6 +83,7 @@
     function ready(message) {
         if (initialized) return;
         initialized = true;
+        unavailable = Boolean(message);
         enable(!message);
         status.textContent = message ? "Model unavailable." : "Ready.";
         if (message) error.textContent = message;
@@ -88,6 +93,7 @@
         if (response.request_id !== activeRequest) return;
         if (activeRequest === null && response.request_id !== null) return;
         activeRequest = null;
+        unavailable = Boolean(response.fatal);
         enable(!response.fatal);
         clearErrors();
         if (response.kind === "success") {
@@ -110,8 +116,35 @@
             }
         }
     }
-    window.tease = { ready, receive };
-    inputs.forEach(input => {
+    let exporting = false;
+    function downloadFinished(message) {
+        exporting = false;
+        const notice = document.getElementById("download-status"); if (notice) notice.textContent = message;
+    }
+    window.tease = { ready, receive, downloadFinished, exportCsv(csv) {
+        if (exporting) return;
+        exporting = true;
+        try { window.ipc.postMessage(JSON.stringify({export_csv:csv})); }
+        catch (_) { downloadFinished("Could not request CSV export. Please try again."); }
+    } };
+    inputs.forEach((input,index) => {
+        if (input.type === "file") input.addEventListener("change", async () => {
+            const ticket = input._ticket = (input._ticket || 0) + 1;
+            input._payload = ""; input._reading = true; button.disabled = true;
+            const file = input.files[0];
+            const preview = document.getElementById(`preview-${index}`); preview.replaceChildren();
+            try {
+                const raw = await window.teaseFiles.read(file,input.dataset.fileKind);
+                if (input._ticket !== ticket) return;
+                window.teaseFiles.apply(input,raw,preview,file?.name || "No file selected",false);
+                clearErrors(); status.textContent = raw ? "File loaded. Select Predict to run." : "Select a file.";
+            } catch (failure) {
+                if (input._ticket !== ticket) return;
+                input._payload = ""; input._reading = false;
+                error.textContent = failure.message; status.textContent = "File not loaded.";
+            }
+            enable(initialized && !unavailable && activeRequest === null);
+        });
         input.addEventListener("change", () => { if (preset) preset.value = ""; });
         if (input.type === "range") {
             input.addEventListener("input", () => { input.nextElementSibling.textContent = input.value; });

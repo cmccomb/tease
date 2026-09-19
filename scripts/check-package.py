@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory(prefix="tease-package-") as scratch:
         names = {member.name for member in members}
         required = ["Cargo.toml", "Cargo.lock", "LICENSE-MIT", "LICENSE-APACHE", "README.md",
                     "CHANGELOG.md", "RELEASING.md", "docs/migration-0.2.md", "docs/examples.md",
-                    "src/ui.js", "src/render.js", "src/rich.rs", "src/worker.rs", "examples/smartcore_classification.rs"]
+                    "src/ui.js", "src/render.js", "src/files.js", "src/media.rs", "src/rich.rs", "src/worker.rs", "examples/smartcore_classification.rs"]
         missing = [path for path in required if f"{name}/{path}" not in names]
         if missing:
             raise RuntimeError(f"Package missing required files: {missing}")
@@ -79,6 +79,12 @@ fn main() -> Result<(), tease::Error> {
         .with_comparison(true).with_outputs(vec![Output::plot("Plot"),Output::probabilities("Classes")])
         .with_predictor(move |_| Ok(vec![Value::Plot(plot.clone()),Value::Scores(vec![tease::ClassScore { label: "A".into(), score: 1.0 }])])).prepare()?;
     assert_eq!(rich.predict(&[Value::Text("test".into()),Value::Bool(true)])?.len(),2);
+    let table=tease::Table {columns:vec!["x".into()],rows:vec![vec!["1".into()]]};
+    assert_eq!(tease::Table::from_csv(&table.to_csv().unwrap()).unwrap(),table);
+    let png: &[u8] = &[137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,2,0,0,0,144,119,83,222,0,0,0,12,73,68,65,84,120,156,99,112,104,56,0,0,2,132,1,129,38,151,167,43,0,0,0,0,73,69,78,68,174,66,96,130];
+    let image=tease::ImageData::from_bytes(png).unwrap(); assert_eq!(image.bytes().unwrap(),png);
+    let tables=Teaser::default().with_inputs(vec![Input::table("Data")]).with_output(Output::table("Data")).with_predictor(|v|Ok(v.to_vec())).prepare()?;
+    assert_eq!(tables.predict(&[Value::Table(table.clone())])?,vec![Value::Table(table)]);
     println!("Packaged Tease consumer passed.");
     Ok(())
 }
