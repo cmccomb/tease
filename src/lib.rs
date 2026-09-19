@@ -66,6 +66,7 @@ pub struct Teaser {
     numeric_callback: bool,
     presets: Vec<Preset>,
     comparison: bool,
+    live_delay: Option<u64>,
 }
 
 impl Default for Teaser {
@@ -79,6 +80,7 @@ impl Default for Teaser {
             numeric_callback: true,
             presets: Vec::new(),
             comparison: false,
+            live_delay: None,
         }
     }
 }
@@ -167,8 +169,20 @@ impl Teaser {
         self.comparison = enabled;
         self
     }
+    /// Enable live prediction after edits settle for 50–5,000 milliseconds.
+    /// One request runs at a time; only the latest pending input snapshot is retained.
+    /// The user can pause live updates in the window.
+    pub fn with_live_prediction(mut self, debounce_ms: u64) -> Self {
+        self.live_delay = Some(debounce_ms);
+        self
+    }
     /// Check component definitions and numerical adapter compatibility.
     pub fn validate(&self) -> Result<(), Error> {
+        if self.live_delay.is_some_and(|ms| !(50..=5000).contains(&ms)) {
+            return Err(Error::Configuration(
+                "Live prediction delay must be 50–5,000 ms.".into(),
+            ));
+        }
         if self.inputs.is_empty() || self.outputs.is_empty() {
             return Err(Error::Configuration(
                 "At least one input and output are required.".into(),

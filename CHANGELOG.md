@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — 2026-09-19
+
+- Opt-in debounced live prediction with editable inputs during inference.
+- One running request and one replaceable pending snapshot.
+- Revision checks discard results for superseded inputs; pause clears queued work.
+- IME composition/file-read handling, a delayed live example, and lifecycle tests.
+
+
 ## 0.4.0 — 2026-09-19
 
 - Validated local PNG/JPEG inputs, previews, and image outputs.

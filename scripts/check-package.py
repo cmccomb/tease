@@ -85,6 +85,7 @@ fn main() -> Result<(), tease::Error> {
     let image=tease::ImageData::from_bytes(png).unwrap(); assert_eq!(image.bytes().unwrap(),png);
     let tables=Teaser::default().with_inputs(vec![Input::table("Data")]).with_output(Output::table("Data")).with_predictor(|v|Ok(v.to_vec())).prepare()?;
     assert_eq!(tables.predict(&[Value::Table(table.clone())])?,vec![Value::Table(table)]);
+    Teaser::default().with_live_prediction(200).validate()?;
     println!("Packaged Tease consumer passed.");
     Ok(())
 }

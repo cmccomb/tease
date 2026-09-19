@@ -62,77 +62,128 @@
         });
         clearErrors(); status.textContent = `Loaded ${scenario.name}. Select Predict to run.`;
         enable(initialized && !unavailable && activeRequest === null, activeRequest !== null);
+        changed();
     });
-    let initialized = false;
-    let unavailable = false;
-    let activeRequest = null;
-    let nextRequest = 0;
+    const live = document.getElementById("live");
+    let initialized = false, unavailable = false;
+    let activeRequest = null, nextRequest = 0;
+    let revision = 0, pending = null, timer = null;
+    const isLive = () => Boolean(live?.checked);
+    const filesReady = () => !inputs.some(input => input._reading || (input.type === "file" && !input._payload));
+    function cancelPending() {
+        if (timer !== null) clearTimeout(timer);
+        timer = null; pending = null;
+    }
     function enable(enabled, busy = false) {
         button.disabled = !enabled || inputs.some(input => input._reading);
-        inputs.forEach(input => { input.disabled = !enabled; });
-        if (preset) preset.disabled = !enabled;
-        form.setAttribute("aria-busy", String(busy));
+        const editable = enabled || (isLive() && initialized && !unavailable);
+        inputs.forEach(input => { input.disabled = !editable; });
+        if (preset) preset.disabled = !editable;
+        if (live) live.disabled = !initialized || unavailable;
+        form.setAttribute("aria-busy", String(busy && !editable));
+        document.getElementById("results")?.setAttribute("aria-busy", String(busy));
     }
     function clearErrors() {
         error.textContent = "";
-        inputs.forEach((input, index) => {
-            input.removeAttribute("aria-invalid");
-            document.getElementById(`error-${index}`).textContent = "";
+        inputs.forEach((input,index) => {
+            input.removeAttribute("aria-invalid"); document.getElementById(`error-${index}`).textContent = "";
         });
+    }
+    function snapshot() {
+        return { raw: inputs.map(read), inputs: inputs.map(describe), revision,
+            name: preset && preset.value !== "" ? config.presets[Number(preset.value)].name : "Inputs" };
+    }
+    function schedule() {
+        if (!isLive() || !initialized || unavailable || !filesReady() || inputs.some(input => input._composing)) return;
+        if (timer !== null) clearTimeout(timer);
+        timer = setTimeout(() => {
+            timer = null;
+            if (!isLive() || unavailable || !filesReady()) return;
+            const job = snapshot();
+            if (activeRequest !== null) { pending = job; status.textContent = "Waiting to run the latest inputs…"; }
+            else send(job);
+        }, config.liveDelay);
+    }
+    function changed() {
+        revision++;
+        cancelPending();
+        schedule();
     }
     function ready(message) {
         if (initialized) return;
-        initialized = true;
-        unavailable = Boolean(message);
+        initialized = true; unavailable = Boolean(message);
         enable(!message);
         status.textContent = message ? "Model unavailable." : "Ready.";
         if (message) error.textContent = message;
+        else schedule();
+    }
+    function send(job) {
+        if (activeRequest !== null || unavailable || !initialized || inputs.some(input => input._reading)) return;
+        clearErrors(); outputs.forEach(output => { output.textContent = ""; });
+        submitted = {inputs:job.inputs, name:job.name, revision:job.revision};
+        current = null; if (pin) pin.disabled = true; compare();
+        activeRequest = ++nextRequest;
+        enable(false,true); status.textContent = "Computing…";
+        try { window.ipc.postMessage(JSON.stringify({request_id:activeRequest, inputs:job.raw})); }
+        catch (_) { receive({request_id:activeRequest,kind:"error",field:null,message:"Could not submit the prediction. Please try again."}); }
+    }
+    function flush() {
+        if (!pending || !isLive() || unavailable || !filesReady()) return;
+        const job = pending; pending = null;
+        if (job.revision === revision) send(job);
     }
     function receive(response) {
-        // A late or duplicate response must not overwrite newer state or unlock a job.
         if (response.request_id !== activeRequest) return;
         if (activeRequest === null && response.request_id !== null) return;
-        activeRequest = null;
-        unavailable = Boolean(response.fatal);
-        enable(!response.fatal);
+        activeRequest = null; unavailable = Boolean(response.fatal);
+        if (unavailable) cancelPending();
+        enable(!unavailable);
+        // Matching a request ID is insufficient: controls can change while it runs.
+        if (!unavailable && live && submitted && submitted.revision !== revision) {
+            status.textContent = inputs.some(input => input._reading) ? "Reading file…" : !filesReady() ? "Select a valid file to continue." : isLive() ? "Updating to the latest inputs…" : "Inputs changed. Select Predict to run.";
+            flush(); return;
+        }
         clearErrors();
         if (response.kind === "success") {
-            outputs.forEach((output, index) => render(output, response.values[index]));
-            current = { ...submitted, values: response.values };
+            outputs.forEach((output,index) => render(output,response.values[index]));
+            current = {...submitted, values:response.values};
             if (pin) pin.disabled = pinned.length >= 3;
-            compare();
-            status.textContent = "Prediction complete.";
+            compare(); status.textContent = "Prediction complete.";
         } else {
             outputs.forEach(output => { output.textContent = ""; });
-            status.textContent = response.fatal ? "Model unavailable." : "Prediction not completed.";
+            status.textContent = unavailable ? "Model unavailable." : "Prediction not completed.";
             error.textContent = response.message;
-            if (!response.fatal && Number.isInteger(response.field) && inputs[response.field]) {
-                const input = inputs[response.field];
-                input.setAttribute("aria-invalid", "true");
+            if (!unavailable && Number.isInteger(response.field) && inputs[response.field]) {
+                const input = inputs[response.field]; input.setAttribute("aria-invalid","true");
                 document.getElementById(`error-${response.field}`).textContent = response.message;
-                input.focus();
-            } else {
-                error.focus();
-            }
+                if (!isLive()) input.focus();
+            } else if (unavailable || !isLive()) error.focus();
         }
+        flush();
     }
     let exporting = false;
     function downloadFinished(message) {
         exporting = false;
         const notice = document.getElementById("download-status"); if (notice) notice.textContent = message;
     }
-    window.tease = { ready, receive, downloadFinished, exportCsv(csv) {
+    window.tease = {ready,receive,downloadFinished,exportCsv(csv) {
         if (exporting) return;
         exporting = true;
         try { window.ipc.postMessage(JSON.stringify({export_csv:csv})); }
         catch (_) { downloadFinished("Could not request CSV export. Please try again."); }
-    } };
+    }};
+    if (live) live.addEventListener("change", () => {
+        cancelPending();
+        enable(initialized && !unavailable && activeRequest === null, activeRequest !== null);
+        if (isLive()) schedule();
+        else if (activeRequest === null) status.textContent = "Live prediction paused. Select Predict to run.";
+    });
     inputs.forEach((input,index) => {
         if (input.type === "file") input.addEventListener("change", async () => {
+            changed();
             const ticket = input._ticket = (input._ticket || 0) + 1;
             input._payload = ""; input._reading = true; button.disabled = true;
-            const file = input.files[0];
-            const preview = document.getElementById(`preview-${index}`); preview.replaceChildren();
+            const file = input.files[0], preview = document.getElementById(`preview-${index}`); preview.replaceChildren();
             try {
                 const raw = await window.teaseFiles.read(file,input.dataset.fileKind);
                 if (input._ticket !== ticket) return;
@@ -143,31 +194,24 @@
                 input._payload = ""; input._reading = false;
                 error.textContent = failure.message; status.textContent = "File not loaded.";
             }
-            enable(initialized && !unavailable && activeRequest === null);
+            enable(initialized && !unavailable && activeRequest === null, activeRequest !== null);
+            changed();
         });
-        input.addEventListener("change", () => { if (preset) preset.value = ""; });
-        if (input.type === "range") {
-            input.addEventListener("input", () => { input.nextElementSibling.textContent = input.value; });
-        }
+        input.addEventListener("compositionstart", () => {input._composing = true; revision++; cancelPending();});
+        input.addEventListener("compositionend", () => {input._composing = false; changed();});
+        input.addEventListener("input", () => {
+            if (input.type === "range") input.nextElementSibling.textContent = input.value;
+            if (preset) preset.value = "";
+            if (input.type !== "file") changed();
+        });
+        input.addEventListener("change", () => { if (preset) preset.value = ""; if (input.type !== "file") changed(); });
     });
     form.addEventListener("submit", event => {
         event.preventDefault();
-        if (!initialized || button.disabled || activeRequest !== null) return;
-        clearErrors();
-        outputs.forEach(output => { output.textContent = ""; });
-        submitted = { inputs: inputs.map(describe), name: preset && preset.value !== "" ? config.presets[Number(preset.value)].name : "Inputs" };
-        current = null; if (pin) pin.disabled = true; compare();
-        activeRequest = ++nextRequest;
-        enable(false, true);
-        status.textContent = "Computing…";
-        try {
-            window.ipc.postMessage(JSON.stringify({ request_id: activeRequest, inputs: inputs.map(read) }));
-        } catch (_) {
-            receive({ request_id: activeRequest, kind: "error", field: null, message: "Could not submit the prediction. Please try again." });
-        }
+        if (!initialized || unavailable || button.disabled || activeRequest !== null) return;
+        cancelPending(); send(snapshot());
     });
-    enable(false, true);
-    status.textContent = "Preparing model…";
+    enable(false,true); status.textContent = "Preparing model…";
     try { window.ipc.postMessage("ready"); }
     catch (_) { ready("Could not connect to the model. Restart the demo."); }
 })();

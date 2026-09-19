@@ -135,7 +135,7 @@ pub(crate) fn render(demo: &Teaser) -> String {
         write!(outputs, "<div class=\"field\"><label for=\"output-{index}\">{}</label><output data-output id=\"output-{index}\"></output></div>", escape(&output.label(index))).unwrap();
     }
     let presets = demo.presets.iter().map(|p| serde_json::json!({"name":p.name,"inputs":demo.inputs.iter().zip(&p.inputs).map(|(i,v)|i.encode(v)).collect::<Vec<_>>()})).collect::<Vec<_>>();
-    let config = serde_json::json!({"presets":presets,"comparison":demo.comparison,
+    let config = serde_json::json!({"presets":presets,"comparison":demo.comparison,"liveDelay":demo.live_delay,
         "inputLabels":demo.inputs.iter().enumerate().map(|(i,v)|v.label(i)).collect::<Vec<_>>(),
         "outputs":demo.outputs.iter().enumerate().map(|(i,v)|serde_json::json!({"label":v.label(i),"numeric":matches!(v, Output::Number { .. })})).collect::<Vec<_>>()});
     let config = config
@@ -148,6 +148,11 @@ pub(crate) fn render(demo: &Teaser) -> String {
     } else {
         format!("<label for=\"preset\">Example scenario</label><select id=\"preset\"><option value=\"\">Load a preset…</option>{}</select>", demo.presets.iter().enumerate().map(|(i,p)|format!("<option value=\"{i}\">{}</option>",escape(&p.name))).collect::<String>())
     };
+    let live_control = if demo.live_delay.is_some() {
+        "<label class=\"live-control\"><input id=\"live\" type=\"checkbox\" checked>Live prediction</label>"
+    } else {
+        ""
+    };
     let comparison = if demo.comparison {
         "<section id=\"comparison\" aria-label=\"Scenario comparison\"><h2>Compare scenarios</h2><button id=\"pin\" type=\"button\" disabled>Pin result</button><p class=\"help\">Pin up to three results. Differences use the first pinned result as the baseline.</p><div id=\"scenarios\"></div></section>"
     } else {
@@ -158,8 +163,8 @@ pub(crate) fn render(demo: &Teaser) -> String {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title><style>{style}</style></head><body><main>
 <h1>{title}</h1><p class="description">{description}</p>
-<div class="panels"><form id="tease-form" novalidate>{preset_control}{fields}<button id="submit" type="submit">Predict</button></form>
-<section aria-label="Results" aria-live="polite">{outputs}<p id="status" role="status">Ready.</p></section></div>
+<div class="panels"><form id="tease-form" novalidate>{live_control}{preset_control}{fields}<button id="submit" type="submit">Predict</button></form>
+<section id="results" aria-label="Results" aria-live="polite">{outputs}<p id="status" role="status">Ready.</p></section></div>
 <p id="error" class="error" role="alert" tabindex="-1"></p>
 <p id="download-status" role="status"></p>{comparison}</main><script type="application/json" id="tease-config">{config}</script><script>{render_script}</script><script>{file_script}</script><script>{script}</script></body></html>"#,
         title = escape(&demo.title),

@@ -55,7 +55,7 @@ pub struct ClassScore {
     /// Finite nonnegative score, or a probability when configured as such.
     pub score: f64,
 }
-/// A named, validated set of model inputs. Loading it does not itself run the model.
+/// A named, validated set of model inputs. Loading waits for Predict in manual mode and schedules a prediction in live mode.
 #[derive(Clone, Debug)]
 pub struct Preset {
     /// Display name for this scenario.

@@ -41,7 +41,7 @@ jobs:
       - name: Test documentation
         run: cargo +${{ matrix.rust }} test --locked --doc
       - name: Test UI request lifecycle
-        run: node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs
+        run: node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs tests/live.test.cjs
       - name: Build documentation
         run: cargo +${{ matrix.rust }} doc --locked --no-deps
       - name: Verify packaged consumer

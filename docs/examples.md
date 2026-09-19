@@ -3,8 +3,8 @@
 Run each example from a checkout using `cargo run --locked --example NAME`.
 All numerical inputs must be finite. Model preparation happens once on the
 inference worker; controls become available when the model is ready. Predictions
-use a snapshot of the submitted fields, and controls remain disabled until the
-result arrives. The native window stays responsive throughout.
+use a snapshot of the submitted fields. In manual mode, controls remain disabled
+until the result arrives; live mode keeps inputs editable and discards stale results. The native window stays responsive throughout.
 
 | Example | Purpose | Try this | Expected result |
 | --- | --- | --- | --- |
@@ -17,6 +17,14 @@ result arrives. The native window stays responsive throughout.
 | `smartcore` | Real linear regression, Longley employment data | Leave defaults | 60.056 |
 | `smartcore_classification` | Real Gaussian naive Bayes, Iris data | Leave defaults | Iris setosa |
 | `automl` | Published AutoML regression wrapper | Leave defaults | 206.12 |
+
+## Live prediction (0.5)
+
+Run `cargo run --locked --example live`. After preparation, Value 2 automatically
+produces Squared value 4 and Model calls 1. Editing Value to 5 automatically produces
+25. Each call takes one second: make several changes during that interval and verify
+only the latest pending value is used next. The displayed result belongs to the
+current inputs, never an older submission. Uncheck Live prediction to use the button.
 
 ## Images and CSV batches (0.4)
 

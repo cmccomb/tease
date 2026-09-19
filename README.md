@@ -4,10 +4,10 @@ Turn a Rust function or machine-learning model into a standalone desktop demo.
 Tease generates labeled inputs and results in a native webview, validates input
 before calling your model, and displays prediction errors without restarting.
 
-Tease 0.4.0 uses the typed callback API introduced in 0.2. See
+Tease 0.5.0 uses the typed callback API introduced in 0.2. See
 [migration guidance](docs/migration-0.2.md) when upgrading from 0.1.1.
 
-Add it to a Rust application with `cargo add tease@0.4.0`, then put the example
+Add it to a Rust application with `cargo add tease@0.5.0`, then put the example
 below in `src/main.rs` and run `cargo run`. Install the desktop prerequisites below
 first; the GUI must run on the main thread in a desktop session.
 
@@ -74,8 +74,8 @@ values in `[0,1]` summing to one (tolerance 1e-6). Return `Value::Scores` contai
 unique `ClassScore { label, score }` entries. The model supplies all scores; the UI
 neither invents confidence nor calibrates it.
 
-Add `with_presets(vec![Preset::new(name, values)])` to load named scenarios without
-running the model. `with_comparison(true)` lets users pin up to three successful
+Add `with_presets(vec![Preset::new(name, values)])` to load named scenarios. In manual mode, loading a preset waits
+for Predict; in live mode it schedules a debounced prediction. `with_comparison(true)` lets users pin up to three successful
 results alongside their submitted inputs, then compare them with the current result.
 Numerical differences use the displayed precision. Snapshots last for this window
 session. `cargo run --example exploration` demonstrates these features together.
@@ -106,11 +106,27 @@ are preserved. `Table::to_csv()` instead preserves exact cell contents for progr
 round trips. Pending file reads block submission; replacing a selection discards
 an older read rather than overwriting the newer selection.
 
+## Live prediction (0.5)
+
+Opt in with `with_live_prediction(200)` (milliseconds, allowed range 50–5,000).
+The first prediction runs after model preparation and subsequent changes wait for
+the debounce interval. Inputs remain editable during computation. There is one
+running request and at most one pending snapshot; further edits replace pending
+work. A result from older inputs is discarded even when its request ID matches.
+Pause the Live prediction checkbox to stop pending automatic work and use Predict.
+An already-running callback continues; pausing does not cancel user code.
+
+Live validation/model errors recover on the next edit. Fatal failures disable the
+controls and clear pending work. Text composition waits for committed text; image
+and CSV predictions wait for file reads to finish. A live model should be safe to
+call repeatedly. `cargo run --example live` intentionally waits one second per call,
+so rapid edits and the model-call counter make the queue behavior observable.
+
 ## Background inference
 
 `run()` creates the model and executes predictions on a dedicated worker thread.
-The UI shows preparation/progress states and disables form controls until each
-request finishes. Duplicate requests and stale results are ignored. The window
+The UI shows preparation/progress states. In manual mode, it disables form controls
+until each request finishes; live mode leaves inputs editable. Duplicate requests and stale results are ignored. The window
 can still be moved, resized, or closed during computation.
 
 Direct callbacks must be `Send`, but need not be `Sync`. Use a factory to create
@@ -154,6 +170,7 @@ it is not a universal binary that runs on every operating system.
 ## Examples and checks
 
 ```sh
+cargo run --locked --example live
 cargo run --locked --example images
 cargo run --locked --example batch
 cargo run --locked --example exploration
@@ -169,7 +186,7 @@ cargo fmt --all --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked --all-targets
 cargo test --locked --doc
-node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs
+node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs tests/live.test.cjs
 RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
 ```
 

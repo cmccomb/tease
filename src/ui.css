@@ -28,3 +28,4 @@ h2 { font-size: 1.25rem; } h3 { font-size: 1.1rem; } h4 { margin-bottom: 8px; }
 .result-image { display: block; max-width: 100%; max-height: 420px; object-fit: contain; margin: 12px auto; }
 .table-scroll { overflow: auto; max-height: 360px; } .table-scroll td { white-space: pre-wrap; overflow-wrap: anywhere; }
 .file-preview { margin: 8px 0; } .file-preview .result-image { max-height: 220px; }
+.live-control { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }

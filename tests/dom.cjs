@@ -15,15 +15,16 @@ class Element {
     get options() { return this.children; }
     get selectedOptions() { return this.children.filter(c=>c.selected); }
 }
-function fixture(config={}, inputs=[new Element('input')]) {
+function fixture(config={}, inputs=[new Element('input')], extra={}) {
     const nodes=Object.fromEntries(['tease-form','submit','status','error','tease-config',...inputs.flatMap((_,i)=>[`error-${i}`,`preview-${i}`])].map(id=>[id,new Element()]));
+    if(config.liveDelay) { nodes.live=new Element('input'); nodes.live.type='checkbox'; nodes.live.checked=true; }
     if(config.presets?.length) nodes.preset=new Element('select');
     if(config.comparison) { nodes.pin=new Element('button'); nodes.scenarios=new Element(); }
     nodes['tease-config'].textContent=JSON.stringify(config);
     const outputs=(config.outputs||[{}]).map(()=>new Element('output'));
     const messages=[]; const window={ipc:{postMessage:m=>messages.push(m)}};
     const document={getElementById:id=>nodes[id],querySelectorAll:s=>s==='[data-input]'?inputs:outputs,createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag)};
-    const context={window,document,console};
+    const context={window,document,console,...extra};
     for(const file of ['render.js','files.js','ui.js']) runInNewContext(readFileSync(`${__dirname}/../src/${file}`,'utf8'),context);
     return {window,nodes,outputs,inputs,messages,submit:()=>nodes['tease-form'].fire('submit')};
 }
