@@ -1,10 +1,13 @@
 use tease::{Input, Teaser};
 
-fn main() {
+fn main() -> Result<(), tease::Error> {
     Teaser::default()
-        .with_title("Addition".to_string())
-        .with_description("This is for adding things together.".to_string())
-        .with_inputs(vec![Input::default(); 2])
-        .with_function(|x: Vec<f32>| x.iter().sum())
-        .run();
+        .with_title("Addition")
+        .with_description("Add two numbers together.")
+        .with_inputs(vec![
+            Input::number("First number", 0.0),
+            Input::number("Second number", 0.0),
+        ])
+        .with_function(|x| x.iter().sum())
+        .run()
 }

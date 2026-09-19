@@ -1,0 +1,14 @@
+:root { font-family: system-ui, sans-serif; color: #17242f; background: #f3f5f7; }
+body { margin: 0; } main { max-width: 900px; margin: auto; padding: 32px; }
+h1 { font-size: 1.7rem; margin: 0 0 12px; } .description { white-space: pre-wrap; line-height: 1.5; }
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+form, section { background: white; border: 1px solid #ccd4dc; border-radius: 8px; padding: 24px; }
+.field { margin-bottom: 18px; } label { display: block; font-weight: 600; margin-bottom: 7px; }
+input, select, button { box-sizing: border-box; width: 100%; font: inherit; padding: 9px; }
+input, select { border: 1px solid #788897; border-radius: 4px; }
+input[type=range] { padding: 0; } output { display: block; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.4em; }
+button { background: #174f78; border: 0; border-radius: 4px; color: white; cursor: pointer; }
+button:disabled { opacity: .6; cursor: wait; } :focus-visible { outline: 3px solid #227fbb; outline-offset: 3px; }
+.error { color: #a01c28; white-space: pre-wrap; overflow-wrap: anywhere; } .error:empty { display: none; }
+[aria-invalid=true] { border-color: #a01c28; } #status { color: #485866; }
+@media (max-width: 600px) { .panels { grid-template-columns: 1fr; } main { padding: 16px; } }

@@ -1,59 +1,58 @@
 use smartcore::{
-    linalg::naive::dense_matrix::DenseMatrix,
+    error::Failed,
+    linalg::basic::matrix::DenseMatrix,
     linear::linear_regression::{LinearRegression, LinearRegressionParameters},
 };
-use tease::{Input, Output, Teaser};
+use tease::{Choice, Input, Output, Teaser, Value};
 
-fn main() {
-    let model = train_linear_regression();
+type Model = LinearRegression<f64, f64, DenseMatrix<f64>, Vec<f64>>;
+
+fn main() -> Result<(), tease::Error> {
+    demo().run()
+}
+
+fn demo() -> Teaser {
     Teaser::default()
-        .with_title("Linear Regression".to_string())
+        .with_title("Linear Regression")
         .with_description(
-            "This demonstration runs a <a href=\"https://smartcorelib.org/\"> Smartcore</a> model and shows the results in real time."
-                .to_string(),
+            "Explore a SmartCore linear model fitted to the Longley employment dataset.",
         )
-        .with_output(
-            Output::Number{
-            label: Some("Total Employment".to_string()), precision: 1 })
+        .with_output(Output::number("Total employment", 3))
         .with_inputs(vec![
-            Input::Number {
-                label: Some("GNP Deflator".to_string()),
-                initial_value: 83.0,
-            },
-            Input::Number {
-                label: Some("GNP".to_string()),
-                initial_value: 234.289,
-            },
-            Input::Number {
-                label: Some("Unemployment".to_string()),
-                initial_value: 235.6,
-            },
+            Input::number("GNP deflator", 83.0),
+            Input::number("GNP", 234.289),
+            Input::number("Unemployment", 235.6),
             Input::Slider {
-                label: Some("Size of Armed Forces".to_string()),
+                label: Some("Size of armed forces".into()),
                 min: 140.0,
-                max: 300.0,
+                max: 360.0,
                 step: 0.1,
                 initial_value: 159.0,
             },
-            Input::Number {
-                label: Some("Population".to_string()),
-                initial_value: 107.608,
-            },
+            Input::number("Population", 107.608),
             Input::Dropdown {
-                label: Some("Year".to_string()),
-                options: (1940..2022).step_by(1).map(f64::from).collect(),
+                label: Some("Year".into()),
+                options: (1947..=1962)
+                    .map(|year| Choice::number(year.to_string(), year.into()))
+                    .collect(),
                 initial_value: 0,
             },
         ])
-        .with_function(move |x| {
-            model
-                .predict(&DenseMatrix::from_2d_vec(&vec![x; 1]))
-                .unwrap()[0]
+        .with_predictor_factory(|| {
+            let model = train_linear_regression().map_err(|error| error.to_string())?;
+            Ok(move |values: &[Value]| {
+                let row = values
+                    .iter()
+                    .map(Value::as_number)
+                    .collect::<Result<Vec<_>, _>>()?;
+                let x = DenseMatrix::from_2d_vec(&vec![row]).map_err(|error| error.to_string())?;
+                let prediction = model.predict(&x).map_err(|error| error.to_string())?;
+                Ok(vec![Value::Number(prediction[0])])
+            })
         })
-        .run();
 }
 
-pub fn train_linear_regression() -> LinearRegression<f64, DenseMatrix<f64>> {
+fn train_linear_regression() -> Result<Model, Failed> {
     // Longley dataset (https://www.statsmodels.org/stable/datasets/generated/longley.html)
     let x = DenseMatrix::from_2d_array(&[
         &[83.0, 234.289, 235.6, 159.0, 107.608, 1947.],
@@ -72,14 +71,21 @@ pub fn train_linear_regression() -> LinearRegression<f64, DenseMatrix<f64>> {
         &[114.2, 502.601, 393.1, 251.4, 125.368, 1960.],
         &[115.7, 518.173, 480.6, 257.2, 127.852, 1961.],
         &[116.9, 554.894, 400.7, 282.7, 130.081, 1962.],
-    ]);
+    ])?;
 
     let y: Vec<f64> = vec![
         60.323, 61.122, 60.171, 61.187, 63.221, 63.639, 64.989, 63.761, 66.019, 67.857, 68.169,
         66.513, 68.655, 69.564, 69.331, 70.551,
     ];
 
-    let lr = LinearRegression::fit(&x, &y, LinearRegressionParameters::default()).unwrap();
+    LinearRegression::fit(&x, &y, LinearRegressionParameters::default())
+}
 
-    lr
+#[test]
+fn sample_prediction_is_finite_and_in_employment_range() {
+    let values = [83.0, 234.289, 235.6, 159.0, 107.608, 1947.0].map(Value::Number);
+    let result = demo().prepare().unwrap().predict(&values).unwrap()[0]
+        .as_number()
+        .unwrap();
+    assert!((result - 60.055_659).abs() < 0.001, "{result}");
 }

@@ -1,325 +1,257 @@
-#![warn(clippy::all)]
 #![warn(missing_docs)]
-#![warn(rustdoc::missing_doc_code_examples)]
-#![warn(clippy::missing_docs_in_private_items)]
 #![doc = include_str!("../README.md")]
 
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    fmt::{Debug, Display},
-    str::FromStr,
-};
-
-use wry::{
-    application::{
-        event::{Event, StartCause, WindowEvent},
-        event_loop::{ControlFlow, EventLoop},
-        window::{Window, WindowBuilder},
-    },
-    webview::{WebView, WebViewAttributes, WebViewBuilder},
-};
-
-use num_traits::{zero, Float};
+mod bridge;
+mod components;
+mod desktop;
+mod html;
+mod worker;
 
 pub mod cookbook;
+pub use components::{Choice, Input, Output, Value};
 
-mod html_chunks;
-use html_chunks::{add_dropdown, add_number, add_slider, beginning, end, middle};
+use std::fmt;
 
-/// Types of inputs for the model
-#[derive(Clone)]
+/// A configuration, input, prediction, output, or desktop error.
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum Input<F: Float + Display = f32> {
-    /// A numerical input
-    Number {
-        /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
-        label: Option<String>,
-        /// Initial value to shown in the textbox
-        initial_value: F,
+pub enum Error {
+    /// A component definition is invalid.
+    Configuration(String),
+    /// A submitted field is invalid. Indices are zero-based.
+    Input {
+        /// The index of the affected input, if known.
+        field: Option<usize>,
+        /// A message suitable for displaying to the user.
+        message: String,
     },
-    // /// A textual input
-    // TextBox {
-    //     /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
-    //     label: Option<String>,
-    //     /// Initial value to shown in the textbox
-    //     initial_value: String,
-    // },
-    /// A slider input
-    Slider {
-        /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
-        label: Option<String>,
-        /// Minimum value at far left of slider
-        min: F,
-        /// Maximum value at far right of slider
-        max: F,
-        /// Step size between minimum and maximum
-        step: F,
-        /// Initial value to show on the slider
-        initial_value: F,
-    },
-    /// A dropdown input
-    Dropdown {
-        /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
-        label: Option<String>,
-        /// Set of options to include in the dropdown
-        options: Vec<F>,
-        /// Initial value to show for the dropdown
-        initial_value: usize,
-    },
-    // Checkbox,
-    // CheckboxGroup,
-    // Image,
-    // Video,
-    // Audio,
-    // File,
-    // /// A radio button selector
-    // Radio {
-    //     /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
-    //     label: Option<String>,
-    //     /// Set of options to include in the selection
-    //     options: Vec<f64>,
-    // },
-    // /// An area to upload a file. Specifying a file type will add a preview of the file after loading.
-    // File {
-    //     /// Label to be shown above input. If value is `None`, a default of the form _Input N_ will be shown.
-    //     label: Option<String>,
-    // },
+    /// The model returned an error.
+    Prediction(String),
+    /// Results do not match the output definitions.
+    Output(String),
+    /// The native window or webview could not be created.
+    Desktop(String),
 }
 
-impl<F: Float + Display> Input<F> {
-    fn get_html(&self, idx: usize) -> String {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Input::Number {
-                initial_value,
-                label,
-            } => add_number(idx, initial_value, label),
-            Input::Slider {
-                min,
-                max,
-                step,
-                initial_value,
-                label,
-            } => add_slider(idx, initial_value, max, min, step, label),
-            Input::Dropdown {
-                initial_value,
-                options,
-                label,
-            } => add_dropdown(idx, initial_value, options, label),
-            // Input::File { label, filetype } => match filetype {
-            //     Some(ft) => match ft {
-            //         TypeOfFile::Image => "".to_string(),
-            //         TypeOfFile::Audio => "".to_string(),
-            //         TypeOfFile::Model => "".to_string(),
-            //         TypeOfFile::CSV => "".to_string(),
-            //     },
-            //     None => "".to_string(),
-            // },
+            Self::Configuration(message) => write!(f, "Invalid configuration: {message}"),
+            Self::Input { message, .. } => f.write_str(message),
+            Self::Prediction(message) => write!(f, "Prediction failed: {message}"),
+            Self::Output(message) => write!(f, "Invalid prediction output: {message}"),
+            Self::Desktop(message) => write!(f, "Desktop error: {message}"),
         }
     }
 }
+impl std::error::Error for Error {}
 
-impl<F: Float + Display> Default for Input<F> {
-    fn default() -> Self {
-        Input::Number {
-            label: None,
-            initial_value: zero(),
-        }
-    }
-}
+type Predictor = dyn Fn(&[Value]) -> Result<Vec<Value>, String>;
+type Factory = dyn FnOnce() -> Result<Box<Predictor>, String> + Send;
 
-/// Types of outputs for the model
-#[derive(Clone)]
-#[non_exhaustive]
-pub enum Output {
-    /// A numerical input
-    Number {
-        /// Label to be shown above output. If value is `None`, a default of the form _Result N_ will be shown.
-        label: Option<String>,
-        precision: usize,
-    },
-    // Vector {
-    //     label: Option<String>,
-    // },
-    // Text {
-    //     label: Option<String>,
-    // },
-    // File {
-    //     label: Option<String>,
-    //     filetype: TypeOfFile,
-    // },
-    // HTML {
-    //     label: Option<String>,
-    // },
-}
-
-impl Default for Output {
-    fn default() -> Self {
-        Self::Number {
-            label: Some("Result".to_string()),
-            precision: 2,
-        }
-    }
-}
-
-impl Output {
-    fn get_html(&self) -> String {
-        let label = match self {
-            Output::Number { label, .. } => match label {
-                None => {
-                    format!("Result")
-                }
-                Some(string) => string.to_string(),
-            },
-        };
-        format!("<label for=\"output\" class=\"col-form-label mt-3\"><i>{label}</i></label>
-         <input type=\"text\" class=\"form-control\" id=\"output\" name=\"output\" aria-describedby=\"output\" readonly>")
-    }
-
-    fn get_precision(&self) -> usize {
-        match self {
-            Output::Number { precision, .. } => *precision,
-        }
-    }
-}
-
-/// Construct a teaser to demonstrate your model
-pub struct Teaser<F: Float + Display = f32> {
+/// Configure a standalone model demo.
+///
+/// Model initialization and GUI predictions run on a dedicated worker thread.
+/// Use [`Self::prepare`] to create a headless prediction session.
+pub struct Teaser {
     title: String,
     description: String,
-    inputs: Vec<Input<F>>,
-    output: Output,
-    function: Box<dyn 'static + Fn(Vec<F>) -> F>,
-    use_advanced_function: bool,
-    advanced_function: Box<dyn 'static + Fn(Vec<Input>) -> Vec<Output>>,
+    inputs: Vec<Input>,
+    outputs: Vec<Output>,
+    factory: Box<Factory>,
+    numeric_callback: bool,
 }
 
-impl<F: Float + Display> Default for Teaser<F> {
+impl Default for Teaser {
     fn default() -> Self {
         Self {
-            title: "Demo".to_string(),
-            description: "".to_string(),
+            title: "Demo".into(),
+            description: String::new(),
             inputs: vec![Input::default()],
-            output: Output::default(),
-            function: Box::new(|_| zero()),
-            use_advanced_function: false,
-            advanced_function: Box::new(|_| vec![Output::default()]),
+            outputs: vec![Output::default()],
+            factory: Box::new(|| Ok(Box::new(|values| Ok(vec![values[0].clone()])))),
+            numeric_callback: true,
         }
     }
 }
 
-impl<F: 'static + Float + Display + FromStr> Teaser<F> {
-    /// Add a title to the GUI
-    pub fn with_title(mut self, title: String) -> Self {
-        self.title = title;
+impl Teaser {
+    /// Set the native window title.
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = title.into();
         self
     }
-
-    /// Add a description to the GUI
-    pub fn with_description(mut self, description: String) -> Self {
-        self.description = description;
+    /// Set a plain-text description. HTML is displayed literally.
+    pub fn with_description(mut self, description: impl Into<String>) -> Self {
+        self.description = description.into();
         self
     }
-
-    /// Specify the inputs
-    pub fn with_inputs(mut self, inputs: Vec<Input<F>>) -> Self {
+    /// Define the inputs in callback argument order.
+    pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
         self.inputs = inputs;
         self
     }
-
-    /// Specify the inputs
-    pub fn with_output(mut self, output: Output) -> Self {
-        self.output = output;
+    /// Define a single output.
+    pub fn with_output(self, output: Output) -> Self {
+        self.with_outputs(vec![output])
+    }
+    /// Define outputs in the same order as the callback's returned values.
+    pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
+        self.outputs = outputs;
+        self
+    }
+    /// Adapt a simple numerical function to the common prediction pipeline.
+    ///
+    /// All inputs must have numerical values and there must be one numerical
+    /// output. For mixed inputs, multiple results, or errors, use [`Self::with_predictor`].
+    /// The most recent callback setter replaces any earlier callback.
+    pub fn with_function(mut self, function: impl Fn(Vec<f64>) -> f64 + Send + 'static) -> Self {
+        self.factory = Box::new(move || {
+            Ok(Box::new(move |values: &[Value]| {
+                let numbers = values
+                    .iter()
+                    .map(Value::as_number)
+                    .collect::<Result<_, _>>()?;
+                Ok(vec![Value::Number(function(numbers))])
+            }))
+        });
+        self.numeric_callback = true;
+        self
+    }
+    /// Set a typed, fallible prediction callback.
+    ///
+    /// Values arrive in input order after validation. Return values in output
+    /// order, or an error message to show in the interface. The callback owns
+    /// any captured model and must implement `Send`, but need not be `Sync`.
+    /// For models that are not `Send`, use [`Self::with_predictor_factory`].
+    /// The most recent callback setter replaces any earlier callback.
+    pub fn with_predictor(
+        mut self,
+        predictor: impl Fn(&[Value]) -> Result<Vec<Value>, String> + Send + 'static,
+    ) -> Self {
+        self.factory = Box::new(move || Ok(Box::new(predictor)));
+        self.numeric_callback = false;
+        self
+    }
+    /// Initialize a model on the inference thread, once per session.
+    ///
+    /// The factory must be `Send`; the returned callback and its captured model
+    /// need not be `Send` or `Sync`. Initialization errors are displayed in the
+    /// GUI. [`Self::prepare`] invokes the same factory on the calling thread.
+    pub fn with_predictor_factory<F, P>(mut self, factory: F) -> Self
+    where
+        F: FnOnce() -> Result<P, String> + Send + 'static,
+        P: Fn(&[Value]) -> Result<Vec<Value>, String> + 'static,
+    {
+        self.factory =
+            Box::new(move || factory().map(|predictor| Box::new(predictor) as Box<Predictor>));
+        self.numeric_callback = false;
         self
     }
 
-    /// Specify the function to use.
-    pub fn with_function<G>(mut self, predictor: G) -> Self
-    where
-        G: 'static + Fn(Vec<F>) -> F,
-    {
-        self.function = Box::new(predictor);
-        self
-    }
-
-    /// Specify the advanced function to use (note, this will override a function added using `with_function`)
-    pub fn with_advanced_function<A>(mut self, predictor: A) -> Self
-    where
-        A: 'static + Fn(Vec<Input>) -> Vec<Output>,
-    {
-        self.use_advanced_function = true;
-        self.advanced_function = Box::new(predictor);
-        self
-    }
-
-    /// Run the GUI
-    pub fn run(self)
-    where
-        <F as FromStr>::Err: Debug,
-    {
-        thread_local! {
-            static WEBVIEW: RefCell<HashMap<usize, WebView>> = RefCell::new(HashMap::new());
+    /// Check component definitions and numerical adapter compatibility.
+    pub fn validate(&self) -> Result<(), Error> {
+        if self.inputs.is_empty() || self.outputs.is_empty() {
+            return Err(Error::Configuration(
+                "At least one input and output are required.".into(),
+            ));
         }
-
-        let mut html = beginning(self.description);
-        for (idx, input) in self.inputs.iter().enumerate() {
-            html = format!("{} {}", html, input.get_html(idx));
+        for (index, input) in self.inputs.iter().enumerate() {
+            input.validate(index)?;
         }
-        html = format!("{} {} {} {}", html, middle(), self.output.get_html(), end());
-
-        let event_loop = EventLoop::new();
-        let window = WindowBuilder::new()
-            .with_title(self.title)
-            .build(&event_loop)
-            .unwrap();
-
-        let mut webview_settings = WebViewAttributes::default();
-        webview_settings.devtools = true;
-        let mut webview_builder = WebViewBuilder::new(window).unwrap();
-        webview_builder.webview = webview_settings;
-        let _webview = webview_builder
-            .with_html(html)
-            .unwrap()
-            .with_ipc_handler(move |_window: &Window, req: String| {
-                let number_strings = req.split(",");
-                let mut inputs = vec![zero(); 0];
-                for number in number_strings {
-                    inputs.push(number.parse().unwrap());
+        for output in &self.outputs {
+            if let Output::Number { precision, .. } = output {
+                if *precision > 15 {
+                    return Err(Error::Configuration(
+                        "Output precision must be at most 15.".into(),
+                    ));
                 }
-
-                let y = (*self.function)(inputs);
-                WEBVIEW
-                    .with(|webview| {
-                        let webview = webview.borrow();
-                        let my_webview = webview.get(&0).unwrap();
-                        let precision = self.output.get_precision();
-                        my_webview.evaluate_script(&*format!(
-                            "document.getElementById('output').value = {:.precision$}",
-                            y
-                        ))
-                    })
-                    .expect("TODO: panic message");
-            })
-            .build()
-            .unwrap();
-
-        WEBVIEW.with(|wv| {
-            let mut hash = HashMap::new();
-            hash.insert(0_usize, _webview);
-            wv.replace(hash);
-        });
-
-        event_loop.run(move |event, _, control_flow| {
-            *control_flow = ControlFlow::Wait;
-
-            match event {
-                Event::NewEvents(StartCause::Init) => println!("Wry application started!"),
-                Event::WindowEvent {
-                    event: WindowEvent::CloseRequested,
-                    ..
-                } => *control_flow = ControlFlow::ExitWithCode(0),
-                _ => {}
             }
-        });
+        }
+        if self.numeric_callback
+            && (self.inputs.iter().any(|input| !input.is_numeric())
+                || !matches!(self.outputs.as_slice(), [Output::Number { .. }]))
+        {
+            return Err(Error::Configuration(
+                "with_function requires numerical inputs and one numerical output; use with_predictor for typed results.".into(),
+            ));
+        }
+        Ok(())
+    }
+    /// Initialize a reusable prediction session on the current thread.
+    ///
+    /// Use this for headless tests or applications that manage their own threads.
+    /// Initialization runs once; [`Session::predict`] can be called repeatedly.
+    pub fn prepare(self) -> Result<Session, Error> {
+        self.validate()?;
+        let predictor = (self.factory)().map_err(Error::Prediction)?;
+        Ok(Session {
+            inputs: self.inputs,
+            outputs: self.outputs,
+            predictor,
+        })
+    }
+
+    /// Open the native GUI on the main thread after validating configuration.
+    ///
+    /// Returns setup errors. Model initialization and predictions run on a
+    /// dedicated worker. Closing the window does not wait for running inference;
+    /// callbacks must not rely on graceful completion when the application exits.
+    pub fn run(self) -> Result<(), Error> {
+        self.validate()?;
+        desktop::run(self)
+    }
+}
+
+/// A prepared model session for repeated, synchronous, headless predictions.
+///
+/// Created by [`Teaser::prepare`]. This session stays on the thread where the
+/// model was initialized and does not require the callback to be `Send` or `Sync`.
+pub struct Session {
+    inputs: Vec<Input>,
+    outputs: Vec<Output>,
+    predictor: Box<Predictor>,
+}
+
+impl Session {
+    /// Validate inputs, invoke the model, and validate its results.
+    ///
+    /// Expected failures should be returned as `Err`. Panics propagate for
+    /// headless callers; the desktop worker reports a panic and retires the model.
+    pub fn predict(&self, values: &[Value]) -> Result<Vec<Value>, Error> {
+        if values.len() != self.inputs.len() {
+            return Err(Error::Input {
+                field: None,
+                message: format!(
+                    "Expected {} inputs, received {}.",
+                    self.inputs.len(),
+                    values.len()
+                ),
+            });
+        }
+        for (index, (input, value)) in self.inputs.iter().zip(values).enumerate() {
+            input.validate_value(index, value)?;
+        }
+        let results = (self.predictor)(values).map_err(Error::Prediction)?;
+        if results.len() != self.outputs.len() {
+            return Err(Error::Output(format!(
+                "Expected {} results, received {}.",
+                self.outputs.len(),
+                results.len()
+            )));
+        }
+        for (index, (output, value)) in self.outputs.iter().zip(&results).enumerate() {
+            match (output, value) {
+                (Output::Number { .. }, Value::Number(number)) if number.is_finite() => {}
+                (Output::Text { .. }, Value::Text(_)) => {}
+                _ => {
+                    return Err(Error::Output(format!(
+                        "Result {} has the wrong type or is not finite.",
+                        index + 1
+                    )))
+                }
+            }
+        }
+        Ok(results)
     }
 }

@@ -1,5 +1,5 @@
 use tease::Teaser;
 
-fn main() {
-    Teaser::<f32>::default().run();
+fn main() -> Result<(), tease::Error> {
+    Teaser::default().run()
 }
