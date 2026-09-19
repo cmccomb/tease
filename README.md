@@ -4,10 +4,10 @@ Turn a Rust function or machine-learning model into a standalone desktop demo.
 Tease generates labeled inputs and results in a native webview, validates input
 before calling your model, and displays prediction errors without restarting.
 
-Tease 0.2.0 uses the typed callback API introduced in 0.2. See
+Tease 0.3.0 uses the typed callback API introduced in 0.2. See
 [migration guidance](docs/migration-0.2.md) when upgrading from 0.1.1.
 
-Add it to a Rust application with `cargo add tease@0.2.0`, then put the example
+Add it to a Rust application with `cargo add tease@0.3.0`, then put the example
 below in `src/main.rs` and run `cargo run`. Install the desktop prerequisites below
 first; the GUI must run on the main thread in a desktop session.
 
@@ -50,8 +50,9 @@ fn main() -> Result<(), tease::Error> {
 }
 ```
 
-Inputs support numbers with optional bounds, sliders, and labeled dropdowns.
-Dropdown choices carry numbers or text. Outputs support numbers and plain text.
+Inputs support bounded numbers, sliders, dropdowns, text areas, checkboxes, and
+multi-select choices. Add units and help with `with_unit` and `with_help`. Outputs
+support numbers, text, line/scatter/bar plots, and ranked class scores.
 All labels, descriptions, errors, and text results are rendered as text; HTML is
 not supported. Numerical values must be finite. Callbacks should return errors
 rather than panic. With unwinding enabled, the desktop worker reports a callback
@@ -59,6 +60,25 @@ panic and retires the model; headless sessions propagate panics to the caller.
 
 Use `Teaser::validate()` to check configuration. For headless predictions, call
 `let session = demo.prepare()?` once and reuse `session.predict(&values)`.
+
+## Visual exploration
+
+Use `Output::plot` with `Value::Plot(Plot { kind, x_label, y_label, series })`.
+`PlotKind` supports line, scatter, and bar charts. Each `Series` has a name and
+`Vec<[f64; 2]>` points. Charts include hover labels, keyboard-focusable marks, and
+an expandable data table. Up to 16 series and 10,000 total finite points are allowed;
+coordinate magnitudes are limited to 1e100.
+
+Use `Output::scores` for nonnegative model scores, or `Output::probabilities` for
+values in `[0,1]` summing to one (tolerance 1e-6). Return `Value::Scores` containing
+unique `ClassScore { label, score }` entries. The model supplies all scores; the UI
+neither invents confidence nor calibrates it.
+
+Add `with_presets(vec![Preset::new(name, values)])` to load named scenarios without
+running the model. `with_comparison(true)` lets users pin up to three successful
+results alongside their submitted inputs, then compare them with the current result.
+Numerical differences use the displayed precision. Snapshots last for this window
+session. `cargo run --example exploration` demonstrates these features together.
 
 ## Background inference
 
@@ -108,6 +128,7 @@ it is not a universal binary that runs on every operating system.
 ## Examples and checks
 
 ```sh
+cargo run --locked --example exploration
 cargo run --locked --example addition
 cargo run --locked --example classification
 cargo run --locked --example division
@@ -120,7 +141,7 @@ cargo fmt --all --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked --all-targets
 cargo test --locked --doc
-node --test tests/ui.test.cjs
+node --test tests/ui.test.cjs tests/components.test.cjs
 RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
 ```
 
@@ -139,7 +160,7 @@ local build or dry run does not mean the crate has been published or every targe
 platform has been tested.
 
 Closing the window does not wait for model work, and callbacks must not depend on
-finishing or running cleanup on exit. Cooperative cancellation, plots, parameter
+finishing or running cleanup on exit. Cooperative cancellation, parameter
 sweeps, and installer/signing automation are outside this release.
 
 ## License

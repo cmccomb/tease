@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory(prefix="tease-package-") as scratch:
         names = {member.name for member in members}
         required = ["Cargo.toml", "Cargo.lock", "LICENSE-MIT", "LICENSE-APACHE", "README.md",
                     "CHANGELOG.md", "RELEASING.md", "docs/migration-0.2.md", "docs/examples.md",
-                    "src/ui.js", "src/worker.rs", "examples/smartcore_classification.rs"]
+                    "src/ui.js", "src/render.js", "src/rich.rs", "src/worker.rs", "examples/smartcore_classification.rs"]
         missing = [path for path in required if f"{name}/{path}" not in names]
         if missing:
             raise RuntimeError(f"Package missing required files: {missing}")
@@ -73,6 +73,12 @@ fn main() -> Result<(), tease::Error> {
     assert!(session.predict(&[Value::Number(-1.0), Value::Text("alpha".into())]).is_err());
     assert_eq!(session.predict(&[Value::Number(2.0), Value::Text("alpha".into())])?,
         vec![Value::Number(2.0), Value::Text("alpha".into())]);
+    let plot = tease::Plot { kind: tease::PlotKind::Line, x_label: "x".into(), y_label: "y".into(), series: vec![tease::Series { name: "line".into(), points: vec![[0.0,1.0],[1.0,2.0]] }] };
+    let rich = Teaser::default().with_inputs(vec![Input::text("Note", "", true), Input::checkbox("Enabled", true)])
+        .with_presets(vec![tease::Preset::new("Example",vec![Value::Text("test".into()),Value::Bool(true)])])
+        .with_comparison(true).with_outputs(vec![Output::plot("Plot"),Output::probabilities("Classes")])
+        .with_predictor(move |_| Ok(vec![Value::Plot(plot.clone()),Value::Scores(vec![tease::ClassScore { label: "A".into(), score: 1.0 }])])).prepare()?;
+    assert_eq!(rich.predict(&[Value::Text("test".into()),Value::Bool(true)])?.len(),2);
     println!("Packaged Tease consumer passed.");
     Ok(())
 }

@@ -18,6 +18,15 @@ result arrives. The native window stays responsive throughout.
 | `smartcore_classification` | Real Gaussian naive Bayes, Iris data | Leave defaults | Iris setosa |
 | `automl` | Published AutoML regression wrapper | Leave defaults | 206.12 |
 
+## Visual exploration (0.3)
+
+Run `cargo run --locked --example exploration`. The analytical logistic model shows
+plots, probabilities, text, checkboxes, multi-selects, units/help, presets, and pinned
+comparisons. Load Gentle and predict: response at x=1 is `0.6225`. Pin that result,
+load Steep and predict: `0.9526`, a displayed difference of `+0.3301`. Try all three
+plot styles. Selecting no series produces a recoverable error. Scores describe this
+analytical model, not measured accuracy or calibrated real-world uncertainty.
+
 ## SmartCore regression
 
 The six Longley features are GNP deflator, GNP, unemployment, armed forces,

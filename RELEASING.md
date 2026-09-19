@@ -12,7 +12,7 @@ cargo fmt --all --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked --all-targets
 cargo test --locked --doc
-node --test tests/ui.test.cjs
+node --test tests/ui.test.cjs tests/components.test.cjs
 RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
 python3 scripts/check-package.py
 cargo publish --locked --dry-run --allow-dirty

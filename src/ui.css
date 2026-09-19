@@ -1,5 +1,5 @@
 :root { font-family: system-ui, sans-serif; color: #17242f; background: #f3f5f7; }
-body { margin: 0; } main { max-width: 900px; margin: auto; padding: 32px; }
+body { margin: 0; } main { max-width: 1200px; margin: auto; padding: 32px; }
 h1 { font-size: 1.7rem; margin: 0 0 12px; } .description { white-space: pre-wrap; line-height: 1.5; }
 .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 form, section { background: white; border: 1px solid #ccd4dc; border-radius: 8px; padding: 24px; }
@@ -12,3 +12,15 @@ button:disabled { opacity: .6; cursor: wait; } :focus-visible { outline: 3px sol
 .error { color: #a01c28; white-space: pre-wrap; overflow-wrap: anywhere; } .error:empty { display: none; }
 [aria-invalid=true] { border-color: #a01c28; } #status { color: #485866; }
 @media (max-width: 600px) { .panels { grid-template-columns: 1fr; } main { padding: 16px; } }
+
+textarea { box-sizing: border-box; width: 100%; font: inherit; padding: 9px; resize: vertical; border: 1px solid #788897; border-radius: 4px; }
+input[type=checkbox] { width: 22px; height: 22px; }
+select[multiple] { min-height: 100px; }
+.help { color: #536575; font-size: .88rem; line-height: 1.5; } .help:empty { display: none; }
+svg { display: block; width: 100%; height: auto; } .legend { display: inline-block; margin: 6px 12px 6px 0; font-weight: 600; }
+.score-row { display: grid; grid-template-columns: minmax(80px,1fr) 2fr auto; align-items: center; gap: 8px; margin: 8px 0; }
+meter { width: 100%; height: 24px; } details { margin: 12px 0; overflow: auto; } summary { cursor: pointer; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; } th, td { border-bottom: 1px solid #dbe2e8; text-align: left; padding: 8px; }
+#comparison { margin-top: 24px; } #pin { width: auto; } #scenarios { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,360px),1fr)); gap: 16px; }
+.scenario { min-width: 0; padding: 16px; background: #f5f8fa; border-radius: 6px; } .scenario button { width: auto; }
+h2 { font-size: 1.25rem; } h3 { font-size: 1.1rem; } h4 { margin-bottom: 8px; }

@@ -2,9 +2,9 @@ name: tests
 
 on:
   push:
-    branches: [master, v0.2.0]
+    branches: [master, 'v0.*']
   pull_request:
-    branches: [master, v0.2.0]
+    branches: [master, 'v0.*']
 
 permissions:
   contents: read
@@ -41,7 +41,7 @@ jobs:
       - name: Test documentation
         run: cargo +${{ matrix.rust }} test --locked --doc
       - name: Test UI request lifecycle
-        run: node --test tests/ui.test.cjs
+        run: node --test tests/ui.test.cjs tests/components.test.cjs
       - name: Build documentation
         run: cargo +${{ matrix.rust }} doc --locked --no-deps
       - name: Verify packaged consumer

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 — 2026-09-19
+
+- Local line/scatter/bar plots and validated model-score/probability bars.
+- Text areas, checkboxes, multi-selects, units, and help text.
+- Validated named presets and session-local scenario comparisons.
+- Analytical response example and rendering/control regression tests.
+
+
 ## 0.2.0 — 2026-09-19
 
 ### Added

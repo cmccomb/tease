@@ -24,7 +24,7 @@ pub(crate) fn run(demo: Teaser) -> Result<(), Error> {
     let proxy = event_loop.create_proxy();
     let window = WindowBuilder::new()
         .with_title(&demo.title)
-        .with_inner_size(LogicalSize::new(900.0, 650.0))
+        .with_inner_size(LogicalSize::new(1100.0, 760.0))
         .with_min_inner_size(LogicalSize::new(360.0, 400.0))
         .build(&event_loop)
         .map_err(|error| Error::Desktop(error.to_string()))?;

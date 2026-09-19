@@ -5,7 +5,9 @@ mod bridge;
 mod components;
 mod desktop;
 mod html;
+mod rich;
 mod worker;
+pub use rich::{ClassScore, Plot, PlotKind, Preset, Series};
 
 pub mod cookbook;
 pub use components::{Choice, Input, Output, Value};
@@ -60,6 +62,8 @@ pub struct Teaser {
     outputs: Vec<Output>,
     factory: Box<Factory>,
     numeric_callback: bool,
+    presets: Vec<Preset>,
+    comparison: bool,
 }
 
 impl Default for Teaser {
@@ -71,6 +75,8 @@ impl Default for Teaser {
             outputs: vec![Output::default()],
             factory: Box::new(|| Ok(Box::new(|values| Ok(vec![values[0].clone()])))),
             numeric_callback: true,
+            presets: Vec::new(),
+            comparison: false,
         }
     }
 }
@@ -149,6 +155,16 @@ impl Teaser {
         self
     }
 
+    /// Add named input scenarios. Values are validated before the GUI opens.
+    pub fn with_presets(mut self, presets: Vec<Preset>) -> Self {
+        self.presets = presets;
+        self
+    }
+    /// Allow pinning up to three results and comparing them with the current result.
+    pub fn with_comparison(mut self, enabled: bool) -> Self {
+        self.comparison = enabled;
+        self
+    }
     /// Check component definitions and numerical adapter compatibility.
     pub fn validate(&self) -> Result<(), Error> {
         if self.inputs.is_empty() || self.outputs.is_empty() {
@@ -158,6 +174,19 @@ impl Teaser {
         }
         for (index, input) in self.inputs.iter().enumerate() {
             input.validate(index)?;
+        }
+        for preset in &self.presets {
+            if preset.inputs.len() != self.inputs.len() {
+                return Err(Error::Configuration(format!(
+                    "Preset {} has the wrong input count.",
+                    preset.name
+                )));
+            }
+            for (index, (input, value)) in self.inputs.iter().zip(&preset.inputs).enumerate() {
+                input
+                    .validate_value(index, value)
+                    .map_err(|e| Error::Configuration(format!("Preset {}: {e}", preset.name)))?;
+            }
         }
         for output in &self.outputs {
             if let Output::Number { precision, .. } = output {
@@ -244,6 +273,19 @@ impl Session {
             match (output, value) {
                 (Output::Number { .. }, Value::Number(number)) if number.is_finite() => {}
                 (Output::Text { .. }, Value::Text(_)) => {}
+                (Output::Plot { .. }, Value::Plot(plot)) if plot.validate() => {}
+                (Output::Scores { probabilities, .. }, Value::Scores(scores))
+                    if !scores.is_empty()
+                        && scores.len() <= 100
+                        && scores.iter().enumerate().all(|(i, c)| {
+                            c.score.is_finite()
+                                && c.score >= 0.0
+                                && (!probabilities || c.score <= 1.0)
+                                && !scores[..i].iter().any(|v| v.label == c.label)
+                        })
+                        && (!probabilities
+                            || (scores.iter().map(|s| s.score).sum::<f64>() - 1.0).abs()
+                                <= 1e-6) => {}
                 _ => {
                     return Err(Error::Output(format!(
                         "Result {} has the wrong type or is not finite.",

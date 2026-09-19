@@ -12,7 +12,7 @@ pub(crate) struct Request {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub(crate) enum Response {
     Success {
-        values: Vec<String>,
+        values: Vec<serde_json::Value>,
     },
     Error {
         field: Option<usize>,
@@ -55,10 +55,10 @@ impl Session {
             .enumerate()
             .map(|(index, (input, raw))| {
                 let text = raw.trim();
-                if text.is_empty() {
+                if text.is_empty() && !matches!(input.base(), Input::Text { .. }) {
                     return Err(input.error(index, "A value is required."));
                 }
-                let value = match input {
+                let value = match input.base() {
                     Input::Number { .. } | Input::Slider { .. } => Value::Number(
                         text.parse::<f64>()
                             .map_err(|_| input.error(index, "Enter a number."))?,
@@ -72,6 +72,26 @@ impl Session {
                             .value
                             .clone()
                     }
+                    Input::Text { .. } => Value::Text(raw),
+                    Input::Checkbox { .. } => Value::Bool(
+                        text.parse::<bool>()
+                            .map_err(|_| input.error(index, "Choose a checkbox value."))?,
+                    ),
+                    Input::MultiSelect { options, .. } => {
+                        let indices: Vec<usize> = serde_json::from_str(text)
+                            .map_err(|_| input.error(index, "Choose values from the list."))?;
+                        Value::List(
+                            indices
+                                .into_iter()
+                                .map(|i| {
+                                    options.get(i).map(|c| c.value.clone()).ok_or_else(|| {
+                                        input.error(index, "Choose available options.")
+                                    })
+                                })
+                                .collect::<Result<_, _>>()?,
+                        )
+                    }
+                    Input::Described { .. } => unreachable!(),
                 };
                 input.validate_value(index, &value)?;
                 Ok(value)
@@ -102,11 +122,14 @@ impl Session {
                     .zip(values)
                     .map(|(output, value)| match (output, value) {
                         (Output::Number { precision, .. }, Value::Number(n)) => {
-                            format!("{n:.precision$}")
+                            serde_json::json!(format!("{n:.precision$}"))
                         }
-                        (_, Value::Text(text)) => text,
+                        (_, Value::Text(text)) => serde_json::json!(text),
                         // predict() already checks output types.
-                        (_, Value::Number(n)) => n.to_string(),
+                        (_, Value::Number(n)) => serde_json::json!(n.to_string()),
+                        (Output::Plot { .. }, Value::Plot(plot)) => serde_json::json!({"kind":"plot", "plot":plot}),
+                        (Output::Scores { probabilities, .. }, Value::Scores(scores)) => serde_json::json!({"kind":"scores", "probabilities":probabilities, "scores":scores}),
+                        _ => unreachable!("validated output"),
                     })
                     .collect(),
             },
