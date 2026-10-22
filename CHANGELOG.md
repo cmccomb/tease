@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1 — Unreleased
+
+- Shortened the crate README for easier reading on crates.io and added release,
+  documentation, CI, and license badges.
+- Moved detailed feature behavior and limits into a packaged feature guide.
+- Refreshed one yanked transitive lockfile entry.
+- No API or runtime behavior changes.
+
 ## 0.5.0 — 2026-09-19
 
 - Opt-in debounced live prediction with editable inputs during inference.
