@@ -24,6 +24,7 @@ with tempfile.TemporaryDirectory(prefix="tease-package-") as scratch:
         names = {member.name for member in members}
         required = ["Cargo.toml", "Cargo.lock", "LICENSE-MIT", "LICENSE-APACHE", "README.md",
                     "CHANGELOG.md", "RELEASING.md", "docs/migration-0.2.md", "docs/examples.md",
+                    "docs/guide.md",
                     "src/ui.js", "src/render.js", "src/files.js", "src/media.rs", "src/rich.rs", "src/worker.rs", "examples/smartcore_classification.rs"]
         missing = [path for path in required if f"{name}/{path}" not in names]
         if missing:

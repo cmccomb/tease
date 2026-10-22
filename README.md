@@ -1,19 +1,26 @@
 # Tease
 
-Turn a Rust function or machine-learning model into a standalone desktop demo.
-Tease generates labeled inputs and results in a native webview, validates input
-before calling your model, and displays prediction errors without restarting.
+[![Crates.io](https://img.shields.io/crates/v/tease.svg)](https://crates.io/crates/tease)
+[![Documentation](https://docs.rs/tease/badge.svg)](https://docs.rs/tease)
+[![CI](https://github.com/cmccomb/tease/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/cmccomb/tease/actions/workflows/tests.yml)
+[![License](https://img.shields.io/crates/l/tease.svg)](https://github.com/cmccomb/tease#license)
 
-Tease 0.5.0 uses the typed callback API introduced in 0.2. See
-[migration guidance](docs/migration-0.2.md) when upgrading from 0.1.1.
+Turn a Rust function or machine-learning model into a desktop demo. Tease builds
+the input form and results view, validates submitted values, and runs predictions
+on a worker thread so the window stays responsive.
 
-Add it to a Rust application with `cargo add tease@0.5.0`, then put the example
-below in `src/main.rs` and run `cargo run`. Install the desktop prerequisites below
-first; the GUI must run on the main thread in a desktop session.
+## Get started
 
-## A numerical demo
+Use Rust 1.88 or newer in a desktop session. Install the [platform prerequisites](#platform-prerequisites),
+then add Tease to your application:
 
-```no_run
+```sh
+cargo add tease
+```
+
+Put this in `src/main.rs` and run `cargo run`:
+
+```rust,no_run
 use tease::{Input, Teaser};
 
 fn main() -> Result<(), tease::Error> {
@@ -25,190 +32,47 @@ fn main() -> Result<(), tease::Error> {
 }
 ```
 
-## Typed results and prediction errors
+Tease also accepts typed, fallible callbacks for multiple results. Inputs include
+numbers, choices, text, images, and CSV tables. Results can include text, plots,
+images, tables, and class scores. Live prediction, presets, comparisons, and batch
+prediction are optional. See the [feature guide](https://github.com/cmccomb/tease/blob/master/docs/guide.md)
+for the APIs, limits, and inference behavior.
 
-Component definitions (`Input`, `Output`) describe the interface. `Value` carries
-actual model inputs and outputs. `with_predictor` accepts a fallible callback;
-`with_function` adapts a numerical closure to the same validation and execution path.
+## Examples
 
-```no_run
-use tease::{Input, Output, Teaser, Value};
-
-fn main() -> Result<(), tease::Error> {
-    Teaser::default()
-        .with_inputs(vec![Input::number("Score", 0.7)])
-        .with_outputs(vec![Output::text("Class"), Output::number("Score", 2)])
-        .with_predictor(|values| {
-            let score = values[0].as_number()?;
-            if !(0.0..=1.0).contains(&score) {
-                return Err("Score must be between zero and one.".into());
-            }
-            let class = if score >= 0.5 { "Positive" } else { "Negative" };
-            Ok(vec![Value::Text(class.into()), Value::Number(score)])
-        })
-        .run()
-}
-```
-
-Inputs support bounded numbers, sliders, dropdowns, text areas, checkboxes, and
-multi-select choices. Add units and help with `with_unit` and `with_help`. Outputs
-support numbers, text, line/scatter/bar plots, and ranked class scores.
-All labels, descriptions, errors, and text results are rendered as text; HTML is
-not supported. Numerical values must be finite. Callbacks should return errors
-rather than panic. With unwinding enabled, the desktop worker reports a callback
-panic and retires the model; headless sessions propagate panics to the caller.
-
-Use `Teaser::validate()` to check configuration. For headless predictions, call
-`let session = demo.prepare()?` once and reuse `session.predict(&values)`.
-
-## Visual exploration
-
-Use `Output::plot` with `Value::Plot(Plot { kind, x_label, y_label, series })`.
-`PlotKind` supports line, scatter, and bar charts. Each `Series` has a name and
-`Vec<[f64; 2]>` points. Charts include hover labels, keyboard-focusable marks, and
-an expandable data table. Up to 16 series and 10,000 total finite points are allowed;
-coordinate magnitudes are limited to 1e100.
-
-Use `Output::scores` for nonnegative model scores, or `Output::probabilities` for
-values in `[0,1]` summing to one (tolerance 1e-6). Return `Value::Scores` containing
-unique `ClassScore { label, score }` entries. The model supplies all scores; the UI
-neither invents confidence nor calibrates it.
-
-Add `with_presets(vec![Preset::new(name, values)])` to load named scenarios. In manual mode, loading a preset waits
-for Predict; in live mode it schedules a debounced prediction. `with_comparison(true)` lets users pin up to three successful
-results alongside their submitted inputs, then compare them with the current result.
-Numerical differences use the displayed precision. Snapshots last for this window
-session. `cargo run --example exploration` demonstrates these features together.
-
-## Images and batch data (0.4)
-
-`Input::image` accepts local PNG/JPEG files; `Output::image` displays
-`Value::Image(ImageData)`. Use `ImageData::from_bytes` to validate/encode bytes and
-`bytes()` to decode/validate them for a model. Encoded files are limited to 8 MiB,
-dimensions to 4096×4096, and decoder allocation to 128 MiB. File data stays local.
-Unsupported formats and malformed images are rejected. The image example uses a
-built-in gradient, grayscale conversion, and contrast adjustment.
-
-`Input::table` imports UTF-8 CSV with a header; `Output::table` displays
-`Value::Table(Table { columns, rows })` and exports CSV. Tables support 1–64 unique,
-nonempty column names and up to 1,000 rows, with 8,192 bytes per cell and 2 MiB total
-text. CSV inputs and presets must also fit the 2 MiB encoded CSV limit. The interface previews the first 100 rows; export contains all rows. Tables
-are read-only in this release. CSV quoting preserves commas, quotes, and newlines.
-
-`Session::predict_batch` reuses the model sequentially and returns one `Result`
-per submitted row, preserving order. The batch example maps CSV rows into model
-inputs, retains row errors, and exports both successful predictions and errors.
-
-The Export CSV button opens a native Save dialog and reports save errors or
-cancellation in the interface. Linux needs a working XDG desktop portal. Formula-like text cells receive a leading apostrophe on UI export
-to keep spreadsheet applications from evaluating them; finite numerical strings
-are preserved. `Table::to_csv()` instead preserves exact cell contents for programmatic
-round trips. Pending file reads block submission; replacing a selection discards
-an older read rather than overwriting the newer selection.
-
-## Live prediction (0.5)
-
-Opt in with `with_live_prediction(200)` (milliseconds, allowed range 50–5,000).
-The first prediction runs after model preparation and subsequent changes wait for
-the debounce interval. Inputs remain editable during computation. There is one
-running request and at most one pending snapshot; further edits replace pending
-work. A result from older inputs is discarded even when its request ID matches.
-Pause the Live prediction checkbox to stop pending automatic work and use Predict.
-An already-running callback continues; pausing does not cancel user code.
-
-Live validation/model errors recover on the next edit. Fatal failures disable the
-controls and clear pending work. Text composition waits for committed text; image
-and CSV predictions wait for file reads to finish. A live model should be safe to
-call repeatedly. `cargo run --example live` intentionally waits one second per call,
-so rapid edits and the model-call counter make the queue behavior observable.
-
-## Background inference
-
-`run()` creates the model and executes predictions on a dedicated worker thread.
-The UI shows preparation/progress states. In manual mode, it disables form controls
-until each request finishes; live mode leaves inputs editable. Duplicate requests and stale results are ignored. The window
-can still be moved, resized, or closed during computation.
-
-Direct callbacks must be `Send`, but need not be `Sync`. Use a factory to create
-models that cannot be moved between threads:
-
-```no_run
-use tease::{Teaser, Value};
-
-fn main() -> Result<(), tease::Error> {
-    Teaser::default()
-        .with_predictor_factory(|| {
-            // Load or train a model here, on the inference worker.
-            let multiplier = 2.0;
-            Ok(move |values: &[Value]| Ok(vec![Value::Number(values[0].as_number()? * multiplier)]))
-        })
-        .run()
-}
-```
-
-The factory runs once per session; its returned callback need not be `Send`.
-For headless use, `prepare()` runs the same initialization on the calling thread.
-
-## Build and runtime prerequisites
-
-Rust **1.88 or newer** is required for the supported development baseline,
-including the published AutoML example's dependency stack. Keep `Cargo.lock`
-for reproducible repository builds and use `--locked`. Downstream applications
-should keep their own lockfile. The crate uses Wry 0.57 and Tao 0.37.
-
-- **macOS:** Xcode Command Line Tools (`xcode-select --install`); WebKit is supplied
-  by macOS. Run the GUI on the main thread in a desktop session.
-- **Windows:** the MSVC Rust toolchain and Visual Studio C++ build tools;
-  Microsoft Edge WebView2 Runtime must be installed for the demo to run.
-- **Linux:** GTK 3 and WebKitGTK 4.1 development libraries to build, corresponding
-  runtime libraries plus an X11 or Wayland desktop session to run. On Ubuntu:
-  `sudo apt-get install libgtk-3-dev libwebkit2gtk-4.1-dev libxdo-dev libdbus-1-dev`.
-
-A compiled executable still depends on these platform webview/runtime libraries;
-it is not a universal binary that runs on every operating system.
-
-## Examples and checks
+From a Tease checkout, try:
 
 ```sh
-cargo run --locked --example live
+cargo run --locked --example addition
+cargo run --locked --example exploration
 cargo run --locked --example images
 cargo run --locked --example batch
-cargo run --locked --example exploration
-cargo run --locked --example addition
-cargo run --locked --example classification
-cargo run --locked --example division
-cargo run --locked --example smartcore
-cargo run --locked --example smartcore_classification
-cargo run --locked --example slow
-cargo run --locked --example automl
-
-cargo fmt --all --check
-cargo clippy --locked --all-targets -- -D warnings
-cargo test --locked --all-targets
-cargo test --locked --doc
-node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs tests/live.test.cjs
-RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
+cargo run --locked --example live
 ```
 
-CI is configured for Windows, macOS, and Linux on both stable and Rust 1.88.
-The model and worker tests do not need a display server. See the
-[example guide](docs/examples.md) for input meanings and checked predictions:
-SmartCore regression and Iris classification, AutoML regression, typed results,
-error recovery, and a deliberately slow model.
+The [example guide](https://github.com/cmccomb/tease/blob/master/docs/examples.md)
+lists all demos and checked results, including SmartCore and AutoML models.
 
-## Distribution and release status
+## Platform prerequisites
 
-See [RELEASING.md](RELEASING.md) for archive,
-clean-consumer, platform, and publication checks. Run
-`python3 scripts/check-package.py` to verify the package locally. A successful
-local build or dry run does not mean the crate has been published or every target
-platform has been tested.
+- **macOS:** Xcode Command Line Tools and the system WebKit runtime.
+- **Windows:** MSVC Rust toolchain, Visual Studio C++ build tools, and WebView2 Runtime.
+- **Linux:** GTK 3 and WebKitGTK 4.1 development and runtime libraries, plus a desktop session.
+  On Ubuntu, install `libgtk-3-dev libwebkit2gtk-4.1-dev libxdo-dev libdbus-1-dev`.
 
-Closing the window does not wait for model work, and callbacks must not depend on
-finishing or running cleanup on exit. Cooperative cancellation, parameter
-sweeps, and installer/signing automation are outside this release.
+Run the GUI on the main thread. Built executables still need the target system's
+webview libraries. See [RELEASING.md](https://github.com/cmccomb/tease/blob/master/RELEASING.md)
+for distribution and validation checks.
+
+## Documentation
+
+- [API documentation](https://docs.rs/tease)
+- [Feature guide](https://github.com/cmccomb/tease/blob/master/docs/guide.md)
+- [Examples](https://github.com/cmccomb/tease/blob/master/docs/examples.md)
+- [Migration from 0.1.1](https://github.com/cmccomb/tease/blob/master/docs/migration-0.2.md)
+- [Changelog](https://github.com/cmccomb/tease/blob/master/CHANGELOG.md)
 
 ## License
 
-Licensed under either MIT or Apache-2.0, at your option. See LICENSE-MIT and
-LICENSE-APACHE. Dependency licenses remain their respective owners' terms.
+Licensed under [MIT](https://github.com/cmccomb/tease/blob/master/LICENSE-MIT) or
+[Apache-2.0](https://github.com/cmccomb/tease/blob/master/LICENSE-APACHE), at your option.
