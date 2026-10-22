@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.1 — Unreleased
+## 0.5.1 — 2026-10-22
 
 - Shortened the crate README for easier reading on crates.io and added release,
   documentation, CI, and license badges.
