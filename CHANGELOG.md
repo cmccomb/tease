@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.2 — unreleased
+## 0.5.2 — 2026-10-22
 
 - Added a live example that previews number, slider, dropdown, plot, and
   class-score widgets with a small analytical model.
