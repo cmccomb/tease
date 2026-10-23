@@ -27,11 +27,19 @@
         xmin -= dx * 0.06; xmax += dx * 0.06; ymin -= dy * 0.06; ymax += dy * 0.06;
         const x = n => 100 + (n - xmin) / (xmax - xmin) * 510;
         const y = n => 275 - (n - ymin) / (ymax - ymin) * 250;
+        const tickSize = (ymax - ymin) / 4;
+        const scale = 10 ** Math.floor(Math.log10(tickSize));
+        const step = [1, 2, 2.5, 5, 10].map(n => n * scale)
+            .reduce((best, candidate) => Math.abs(candidate - tickSize) < Math.abs(best - tickSize) ? candidate : best);
+        const firstTick = Math.ceil(ymin / step) * step;
+        for (let b = firstTick; b <= ymax + step * 1e-8; b += step) {
+            const tick = Number(b.toPrecision(8));
+            svg("line", {x1:100, x2:610, y1:y(tick), y2:y(tick), stroke:"#dbe2e8"}, chart);
+            svg("text", {x:92, y:y(tick)+4, "text-anchor":"end", "font-size":20}, chart, String(tick));
+        }
         for (let i = 0; i <= 4; i++) {
-            const a = xmin + (xmax - xmin) * i / 4, b = ymin + (ymax - ymin) * i / 4;
-            svg("line", {x1:100, x2:610, y1:y(b), y2:y(b), stroke:"#dbe2e8"}, chart);
+            const a = xmin + (xmax - xmin) * i / 4;
             svg("text", {x:x(a), y:295, "text-anchor":"middle", "font-size":20}, chart, Number(a.toPrecision(4)).toString());
-            svg("text", {x:92, y:y(b)+4, "text-anchor":"end", "font-size":20}, chart, Number(b.toPrecision(4)).toString());
         }
         svg("text", {x:340, y:322, "text-anchor":"middle", "font-size":24}, chart, data.x_label);
         svg("text", {transform:"translate(16 150) rotate(-90)", "text-anchor":"middle", "font-size":24}, chart, data.y_label);

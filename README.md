@@ -9,6 +9,14 @@ Turn a Rust function or machine-learning model into a desktop demo. Tease builds
 the input form and results view, validates submitted values, and runs predictions
 on a worker thread so the window stays responsive.
 
+![Tease demo with a gain field, offset slider, response plot, and model-supplied probability bars](https://raw.githubusercontent.com/cmccomb/tease/master/docs/preview-response.png)
+
+Preview from the runnable [response example](https://github.com/cmccomb/tease/blob/master/examples/preview.rs).
+[Try the interactive browser preview](https://cmccomb.com/tease/) or
+[see more widget previews](https://github.com/cmccomb/tease/blob/master/docs/examples.md#widget-previews).
+
+<iframe title="Interactive Tease widget preview" src="https://cmccomb.com/tease/live/" width="100%" height="760" loading="lazy"></iframe>
+
 ## Get started
 
 Use Rust 1.88 or newer in a desktop session. Install the [platform prerequisites](#platform-prerequisites),
@@ -44,6 +52,7 @@ From a Tease checkout, try:
 
 ```sh
 cargo run --locked --example addition
+cargo run --locked --example preview
 cargo run --locked --example exploration
 cargo run --locked --example images
 cargo run --locked --example batch

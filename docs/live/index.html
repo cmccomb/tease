@@ -1,0 +1,424 @@
+<!-- Generated from examples/preview.rs using Tease 0.5.2 HTML renderer; model.js adapts its example model for a static browser preview. -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tune a response curve</title><style>:root { font-family: system-ui, sans-serif; color: #17242f; background: #f3f5f7; }
+body { margin: 0; } main { max-width: 1200px; margin: auto; padding: 32px; }
+h1 { font-size: 1.7rem; margin: 0 0 12px; } .description { white-space: pre-wrap; line-height: 1.5; }
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+form, section { background: white; border: 1px solid #ccd4dc; border-radius: 8px; padding: 24px; }
+.field { margin-bottom: 18px; } label { display: block; font-weight: 600; margin-bottom: 7px; }
+input, select, button { box-sizing: border-box; width: 100%; font: inherit; padding: 9px; }
+input, select { border: 1px solid #788897; border-radius: 4px; }
+input[type=range] { padding: 0; } output { display: block; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.4em; }
+button { background: #174f78; border: 0; border-radius: 4px; color: white; cursor: pointer; }
+button:disabled { opacity: .6; cursor: wait; } :focus-visible { outline: 3px solid #227fbb; outline-offset: 3px; }
+.error { color: #a01c28; white-space: pre-wrap; overflow-wrap: anywhere; } .error:empty { display: none; }
+[aria-invalid=true] { border-color: #a01c28; } #status { color: #485866; }
+@media (max-width: 600px) { .panels { grid-template-columns: 1fr; } main { padding: 16px; } }
+
+textarea { box-sizing: border-box; width: 100%; font: inherit; padding: 9px; resize: vertical; border: 1px solid #788897; border-radius: 4px; }
+input[type=checkbox] { width: 22px; height: 22px; }
+select[multiple] { min-height: 100px; }
+.help { color: #536575; font-size: .88rem; line-height: 1.5; } .help:empty { display: none; }
+svg { display: block; width: 100%; height: auto; } .legend { display: inline-block; margin: 6px 12px 6px 0; font-weight: 600; }
+.score-row { display: grid; grid-template-columns: minmax(80px,1fr) 2fr auto; align-items: center; gap: 8px; margin: 8px 0; }
+meter { width: 100%; height: 24px; } details { margin: 12px 0; overflow: auto; } summary { cursor: pointer; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; } th, td { border-bottom: 1px solid #dbe2e8; text-align: left; padding: 8px; }
+#comparison { margin-top: 24px; } #pin { width: auto; } #scenarios { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,360px),1fr)); gap: 16px; }
+.scenario { min-width: 0; padding: 16px; background: #f5f8fa; border-radius: 6px; } .scenario button { width: auto; }
+h2 { font-size: 1.25rem; } h3 { font-size: 1.1rem; } h4 { margin-bottom: 8px; }
+
+.result-image { display: block; max-width: 100%; max-height: 420px; object-fit: contain; margin: 12px auto; }
+.table-scroll { overflow: auto; max-height: 360px; } .table-scroll td { white-space: pre-wrap; overflow-wrap: anywhere; }
+.file-preview { margin: 8px 0; } .file-preview .result-image { max-height: 220px; }
+.live-control { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+</style><script src="model.js"></script></head><body><main>
+<h1>Tune a response curve</h1><p class="description">Change the inputs to update the model output. Pause live prediction to use Predict manually.</p>
+<div class="panels"><form id="tease-form" novalidate><label class="live-control"><input id="live" type="checkbox" checked>Live prediction</label><div class="field"><label for="input-0">Gain (×)</label><input data-input id="input-0" type="number" step="any" value="1" min="0.1" max="5" required aria-describedby="help-0 error-0"><p class="help" id="help-0">Higher gain makes the transition steeper.</p><p class="error" id="error-0"></p></div><div class="field"><label for="input-1">Offset</label><input data-input id="input-1" type="range" min="-3" max="3" step="0.1" value="0" aria-describedby="help-1 error-1"><output class="slider-value" for="input-1">0</output><p class="help" id="help-1"></p><p class="error" id="error-1"></p></div><div class="field"><label for="input-2">Plot style</label><select data-input id="input-2" aria-describedby="help-2 error-2"><option value="0" selected>Line</option><option value="1">Scatter</option></select><p class="help" id="help-2"></p><p class="error" id="error-2"></p></div><button id="submit" type="submit">Predict</button></form>
+<section id="results" aria-label="Results" aria-live="polite"><div class="field"><label for="output-0">Response at x = 1</label><output data-output id="output-0"></output></div><div class="field"><label for="output-1">Response curve</label><output data-output id="output-1"></output></div><div class="field"><label for="output-2">Outcomes at x = 1</label><output data-output id="output-2"></output></div><p id="status" role="status">Ready.</p></section></div>
+<p id="error" class="error" role="alert" tabindex="-1"></p>
+<p id="download-status" role="status"></p><p class="help">Browser preview: the analytical model runs locally in this page. The desktop example runs its Rust callback on a worker thread.</p></main><script type="application/json" id="tease-config">{"comparison":false,"inputLabels":["Gain","Offset","Plot style"],"liveDelay":200,"outputs":[{"label":"Response at x = 1","numeric":true},{"label":"Response curve","numeric":false},{"label":"Outcomes at x = 1","numeric":false}],"presets":[]}</script><script>"use strict";
+(() => {
+    const colors = ["#1864ab", "#c05621", "#2b8a3e", "#7048a5", "#a61e4d", "#087f8c"];
+    function node(tag, text, parent) {
+        const element = document.createElement(tag);
+        if (text !== undefined) element.textContent = text;
+        if (parent) parent.append(element);
+        return element;
+    }
+    function svg(tag, attrs, parent, text) {
+        const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        Object.entries(attrs).forEach(([key, value]) => element.setAttribute(key, String(value)));
+        if (text !== undefined) element.textContent = text;
+        parent.append(element);
+        return element;
+    }
+    function plot(parent, data) {
+        const chart = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        chart.setAttribute("viewBox", "0 0 640 330"); chart.setAttribute("role", "img");
+        chart.setAttribute("aria-label", `${data.y_label} against ${data.x_label}`); parent.append(chart);
+        const points = data.series.flatMap(series => series.points);
+        const xs = points.map(p => p[0]), ys = points.map(p => p[1]);
+        let xmin = Math.min(...xs), xmax = Math.max(...xs), ymin = Math.min(...ys), ymax = Math.max(...ys);
+        if (data.kind === "bar") { ymin = Math.min(0, ymin); ymax = Math.max(0, ymax); }
+        const dx = (xmax - xmin) || Math.max(Math.abs(xmin) * 0.1, 1);
+        const dy = (ymax - ymin) || Math.max(Math.abs(ymin) * 0.1, 1);
+        xmin -= dx * 0.06; xmax += dx * 0.06; ymin -= dy * 0.06; ymax += dy * 0.06;
+        const x = n => 100 + (n - xmin) / (xmax - xmin) * 510;
+        const y = n => 275 - (n - ymin) / (ymax - ymin) * 250;
+        const tickSize = (ymax - ymin) / 4;
+        const scale = 10 ** Math.floor(Math.log10(tickSize));
+        const step = [1, 2, 2.5, 5, 10].map(n => n * scale)
+            .reduce((best, candidate) => Math.abs(candidate - tickSize) < Math.abs(best - tickSize) ? candidate : best);
+        const firstTick = Math.ceil(ymin / step) * step;
+        for (let b = firstTick; b <= ymax + step * 1e-8; b += step) {
+            const tick = Number(b.toPrecision(8));
+            svg("line", {x1:100, x2:610, y1:y(tick), y2:y(tick), stroke:"#dbe2e8"}, chart);
+            svg("text", {x:92, y:y(tick)+4, "text-anchor":"end", "font-size":20}, chart, String(tick));
+        }
+        for (let i = 0; i <= 4; i++) {
+            const a = xmin + (xmax - xmin) * i / 4;
+            svg("text", {x:x(a), y:295, "text-anchor":"middle", "font-size":20}, chart, Number(a.toPrecision(4)).toString());
+        }
+        svg("text", {x:340, y:322, "text-anchor":"middle", "font-size":24}, chart, data.x_label);
+        svg("text", {transform:"translate(16 150) rotate(-90)", "text-anchor":"middle", "font-size":24}, chart, data.y_label);
+        const distinct = Math.max(1, new Set(xs).size);
+        data.series.forEach((series, si) => {
+            const color = colors[si % colors.length];
+            if (data.kind === "line") svg("polyline", {points:series.points.map(p => `${x(p[0])},${y(p[1])}`).join(" "), fill:"none", stroke:color, "stroke-width":2}, chart);
+            series.points.forEach(p => {
+                const label = `${series.name}: ${data.x_label} ${p[0]}, ${data.y_label} ${p[1]}`;
+                let mark;
+                if (data.kind === "bar") {
+                    const width = Math.min(40, 440 / distinct / data.series.length);
+                    mark = svg("rect", {x:x(p[0]) + (si - data.series.length / 2) * width, y:Math.min(y(0),y(p[1])), width:width * 0.85, height:Math.max(1,Math.abs(y(0)-y(p[1]))), fill:color}, chart);
+                } else mark = svg("circle", {cx:x(p[0]), cy:y(p[1]), r:3.5, fill:color}, chart);
+                mark.setAttribute("tabindex", "0"); mark.setAttribute("aria-label", label);
+                svg("title", {}, mark, label);
+            });
+            const legend = node("span", series.name, parent); legend.className = "legend"; legend.style.color = color;
+        });
+        const details = node("details", undefined, parent); node("summary", "View plot data", details);
+        const table = node("table", undefined, details);
+        const header = node("tr", undefined, table); ["Series",data.x_label,data.y_label].forEach(v => node("th",v,header));
+        data.series.forEach(s => s.points.forEach(p => { const row = node("tr", undefined, table); [s.name,...p].forEach(v => node("td", String(v), row)); }));
+    }
+    function scores(parent, data) {
+        const max = data.probabilities ? 1 : Math.max(...data.scores.map(s => s.score), 1e-100);
+        [...data.scores].sort((a,b) => b.score-a.score).forEach(score => {
+            const row = node("div", undefined, parent); row.className = "score-row";
+            node("span", score.label, row);
+            const bar = node("meter", undefined, row); bar.min = 0; bar.max = max; bar.value = score.score; bar.setAttribute("aria-label", score.label);
+            node("span", data.probabilities ? `${(100*score.score).toFixed(1)}%` : String(score.score), row);
+        });
+        node("p", data.probabilities ? "Model-supplied probabilities." : "Model scores; not probabilities.", parent).className = "help";
+    }
+    function table(parent, data) {
+        const wrapper = node("div", undefined, parent); wrapper.className = "table-scroll";
+        const grid = node("table", undefined, wrapper);
+        const head = node("tr", undefined, node("thead", undefined, grid));
+        data.table.columns.forEach(label => node("th", label, head).setAttribute("scope", "col"));
+        const body = node("tbody", undefined, grid);
+        // A bounded preview; export always contains every row.
+        data.table.rows.slice(0,100).forEach(row => { const tr = node("tr", undefined, body); row.forEach(cell => node("td", cell, tr)); });
+        node("p", `${data.table.rows.length} rows${data.table.rows.length > 100 ? " (showing first 100)" : ""}`, parent).className = "help";
+        if (data.csv !== undefined) {
+            const button = node("button", "Export CSV", parent); button.type = "button";
+            button.addEventListener("click", () => {
+                window.tease.exportCsv(data.csv);
+            });
+        }
+    }
+    function render(parent, value) {
+        parent.replaceChildren();
+        if (typeof value === "string") parent.textContent = value;
+        else if (value.kind === "plot") plot(parent, value.plot);
+        else if (value.kind === "scores") scores(parent, value);
+        else if (value.kind === "image") {
+            const img = node("img", undefined, parent); img.className = "result-image";
+            img.alt = "Model image"; img.src = `data:${value.image.mime};base64,${value.image.base64}`;
+        }
+        else if (value.kind === "table") table(parent, value);
+    }
+    window.teaseView = { render, node };
+})();
+</script><script>"use strict";
+(() => {
+    function parseCSV(text) {
+        text = text.replace(/^\uFEFF/, "");
+        const rows = []; let row = [], cell = "", quoted = false, closed = false;
+        function field() { row.push(cell); cell = ""; closed = false; }
+        function line() { field(); if (row.length > 1 || row[0] !== "") rows.push(row); row = []; }
+        for (let i = 0; i < text.length; i++) {
+            const c = text[i];
+            if (quoted) {
+                if (c === '"' && text[i+1] === '"') { cell += '"'; i++; }
+                else if (c === '"') { quoted = false; closed = true; }
+                else cell += c;
+            } else if (c === ',' ) field();
+            else if (c === '\n' || c === '\r') { line(); if (c === '\r' && text[i+1] === '\n') i++; }
+            else if (c === '"' && !cell && !closed) quoted = true;
+            else { if (closed || c === '"') throw new Error('Invalid CSV quoting.'); cell += c; }
+            if (rows.length > 1001 || row.length > 64 || cell.length > 8192) throw new Error('CSV exceeds its row, column, or cell limits.');
+        }
+        if (quoted) throw new Error('CSV has an unclosed quoted field.');
+        if (cell || row.length || closed) line();
+        const columns = rows.shift() || [];
+        if (!columns.length || columns.length > 64 || columns.some(c => !c.trim()) || new Set(columns).size !== columns.length || rows.some(r => r.length !== columns.length) || rows.length > 1000) throw new Error('CSV needs unique headers and rows of matching width (up to 1,000 rows).');
+        return {columns, rows};
+    }
+    function apply(input, raw, preview, name = 'Preset file', invalidate = true) {
+        if (invalidate) input._ticket = (input._ticket || 0) + 1; input._reading = false;
+        input._payload = ''; input._fileName = name;
+        preview.replaceChildren();
+        if (!raw) return;
+        let data;
+        if (input.dataset.fileKind === 'image') {
+            const image = JSON.parse(raw);
+            if (!['image/png','image/jpeg'].includes(image.mime)) throw new Error('Select a PNG or JPEG image.');
+            data = {kind:'image',image};
+        } else { data = {kind:'table',table:parseCSV(raw)}; }
+        window.teaseView.render(preview, data);
+        window.teaseView.node('p', name, preview).className = 'help';
+        input._payload = raw;
+    }
+    function read(file, kind) {
+        if (!file) return Promise.resolve('');
+        if (file.size > (kind === 'image' ? 8 : 2) * 1024 * 1024) return Promise.reject(new Error('File exceeds the size limit.'));
+        return new Promise((resolve,reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('Could not read the selected file.'));
+            reader.onload = () => {
+                try {
+                    if (kind === 'table') resolve(String(reader.result));
+                    else {
+                        const base64 = String(reader.result).split(',')[1] || '';
+                        const mime = base64.startsWith('iVBORw0KGgo') ? 'image/png' : base64.startsWith('/9j/') ? 'image/jpeg' : '';
+                        if (!mime) throw new Error('Select a PNG or JPEG image.');
+                        resolve(JSON.stringify({mime,base64}));
+                    }
+                } catch (error) { reject(error); }
+            };
+            if (kind === 'image') reader.readAsDataURL(file); else reader.readAsText(file,'UTF-8');
+        });
+    }
+    window.teaseFiles = {apply,read,parseCSV};
+})();
+</script><script>"use strict";
+(() => {
+    const form = document.getElementById("tease-form");
+    const inputs = Array.from(document.querySelectorAll("[data-input]"));
+    const outputs = Array.from(document.querySelectorAll("[data-output]"));
+    const button = document.getElementById("submit");
+    const status = document.getElementById("status");
+    const error = document.getElementById("error");
+    const config = JSON.parse(document.getElementById("tease-config")?.textContent || "{}");
+    const preset = document.getElementById("preset");
+    const pin = document.getElementById("pin");
+    const scenarios = document.getElementById("scenarios");
+    const pinned = [];
+    let current = null, submitted = null;
+    const render = (output, value) => window.teaseView ? window.teaseView.render(output, value) : output.textContent = value;
+    const read = input => input.type === "file" ? input._payload || "" : input.type === "checkbox" ? String(input.checked) : input.multiple ? JSON.stringify(Array.from(input.selectedOptions, option => Number(option.value))) : input.value;
+    function describe(input) {
+        if (input.type === "file") return input._fileName || "No file selected";
+        if (input.multiple) return Array.from(input.selectedOptions, option => option.textContent).join(", ") || "None";
+        if (input.tagName === "SELECT") return input.selectedOptions[0]?.textContent || "";
+        return read(input);
+    }
+    function compare() {
+        if (!scenarios) return;
+        scenarios.replaceChildren();
+        const node = window.teaseView.node;
+        const all = pinned.map((snapshot, index) => ({snapshot, index}));
+        if (current && pinned.length) all.push({snapshot:current, index:null});
+        all.forEach(({snapshot,index}) => {
+            const card = node("article", undefined, scenarios); card.className = "scenario";
+            node("h3", index === null ? "Current result" : `Pinned ${index + 1}`, card);
+            const details = node("details", undefined, card); node("summary", snapshot.name || "Inputs", details);
+            snapshot.inputs.forEach((value,i) => node("p", `${config.inputLabels[i]}: ${value}`, details));
+            snapshot.values.forEach((value,i) => {
+                node("h4", config.outputs[i].label, card);
+                render(node("div", undefined, card), value);
+                if (config.outputs[i].numeric && pinned.length) {
+                    const delta = Number(value) - Number(pinned[0].values[i]);
+                    node("p", `Difference: ${delta >= 0 ? "+" : ""}${Number(delta.toPrecision(6))}`, card).className = "help";
+                }
+            });
+            if (index !== null) {
+                const remove = node("button", "Remove", card); remove.type = "button";
+                remove.addEventListener("click", () => { pinned.splice(index,1); compare(); if (pin) pin.disabled = !current || pinned.length >= 3; });
+            }
+        });
+    }
+    if (pin) pin.addEventListener("click", () => {
+        if (!current || pinned.length >= 3) return;
+        pinned.push(JSON.parse(JSON.stringify(current))); pin.disabled = pinned.length >= 3; compare();
+    });
+    if (preset) preset.addEventListener("change", () => {
+        const scenario = config.presets[Number(preset.value)];
+        if (preset.value === "" || !scenario) return;
+        scenario.inputs.forEach((value,i) => {
+            const input = inputs[i];
+            if (input.type === "file") { input.value = ""; window.teaseFiles.apply(input,value,document.getElementById(`preview-${i}`)); }
+            else if (input.type === "checkbox") input.checked = value === "true";
+            else if (input.multiple) { const selected = JSON.parse(value); Array.from(input.options).forEach(option => option.selected = selected.includes(Number(option.value))); }
+            else input.value = value;
+            if (input.type === "range") input.nextElementSibling.textContent = input.value;
+        });
+        clearErrors(); status.textContent = `Loaded ${scenario.name}. Select Predict to run.`;
+        enable(initialized && !unavailable && activeRequest === null, activeRequest !== null);
+        changed();
+    });
+    const live = document.getElementById("live");
+    let initialized = false, unavailable = false;
+    let activeRequest = null, nextRequest = 0;
+    let revision = 0, pending = null, timer = null;
+    const isLive = () => Boolean(live?.checked);
+    const filesReady = () => !inputs.some(input => input._reading || (input.type === "file" && !input._payload));
+    function cancelPending() {
+        if (timer !== null) clearTimeout(timer);
+        timer = null; pending = null;
+    }
+    function enable(enabled, busy = false) {
+        button.disabled = !enabled || inputs.some(input => input._reading);
+        const editable = enabled || (isLive() && initialized && !unavailable);
+        inputs.forEach(input => { input.disabled = !editable; });
+        if (preset) preset.disabled = !editable;
+        if (live) live.disabled = !initialized || unavailable;
+        form.setAttribute("aria-busy", String(busy && !editable));
+        document.getElementById("results")?.setAttribute("aria-busy", String(busy));
+    }
+    function clearErrors() {
+        error.textContent = "";
+        inputs.forEach((input,index) => {
+            input.removeAttribute("aria-invalid"); document.getElementById(`error-${index}`).textContent = "";
+        });
+    }
+    function snapshot() {
+        return { raw: inputs.map(read), inputs: inputs.map(describe), revision,
+            name: preset && preset.value !== "" ? config.presets[Number(preset.value)].name : "Inputs" };
+    }
+    function schedule() {
+        if (!isLive() || !initialized || unavailable || !filesReady() || inputs.some(input => input._composing)) return;
+        if (timer !== null) clearTimeout(timer);
+        timer = setTimeout(() => {
+            timer = null;
+            if (!isLive() || unavailable || !filesReady()) return;
+            const job = snapshot();
+            if (activeRequest !== null) { pending = job; status.textContent = "Waiting to run the latest inputs…"; }
+            else send(job);
+        }, config.liveDelay);
+    }
+    function changed() {
+        revision++;
+        cancelPending();
+        schedule();
+    }
+    function ready(message) {
+        if (initialized) return;
+        initialized = true; unavailable = Boolean(message);
+        enable(!message);
+        status.textContent = message ? "Model unavailable." : "Ready.";
+        if (message) error.textContent = message;
+        else schedule();
+    }
+    function send(job) {
+        if (activeRequest !== null || unavailable || !initialized || inputs.some(input => input._reading)) return;
+        clearErrors(); outputs.forEach(output => { output.textContent = ""; });
+        submitted = {inputs:job.inputs, name:job.name, revision:job.revision};
+        current = null; if (pin) pin.disabled = true; compare();
+        activeRequest = ++nextRequest;
+        enable(false,true); status.textContent = "Computing…";
+        try { window.ipc.postMessage(JSON.stringify({request_id:activeRequest, inputs:job.raw})); }
+        catch (_) { receive({request_id:activeRequest,kind:"error",field:null,message:"Could not submit the prediction. Please try again."}); }
+    }
+    function flush() {
+        if (!pending || !isLive() || unavailable || !filesReady()) return;
+        const job = pending; pending = null;
+        if (job.revision === revision) send(job);
+    }
+    function receive(response) {
+        if (response.request_id !== activeRequest) return;
+        if (activeRequest === null && response.request_id !== null) return;
+        activeRequest = null; unavailable = Boolean(response.fatal);
+        if (unavailable) cancelPending();
+        enable(!unavailable);
+        // Matching a request ID is insufficient: controls can change while it runs.
+        if (!unavailable && live && submitted && submitted.revision !== revision) {
+            status.textContent = inputs.some(input => input._reading) ? "Reading file…" : !filesReady() ? "Select a valid file to continue." : isLive() ? "Updating to the latest inputs…" : "Inputs changed. Select Predict to run.";
+            flush(); return;
+        }
+        clearErrors();
+        if (response.kind === "success") {
+            outputs.forEach((output,index) => render(output,response.values[index]));
+            current = {...submitted, values:response.values};
+            if (pin) pin.disabled = pinned.length >= 3;
+            compare(); status.textContent = "Prediction complete.";
+        } else {
+            outputs.forEach(output => { output.textContent = ""; });
+            status.textContent = unavailable ? "Model unavailable." : "Prediction not completed.";
+            error.textContent = response.message;
+            if (!unavailable && Number.isInteger(response.field) && inputs[response.field]) {
+                const input = inputs[response.field]; input.setAttribute("aria-invalid","true");
+                document.getElementById(`error-${response.field}`).textContent = response.message;
+                if (!isLive()) input.focus();
+            } else if (unavailable || !isLive()) error.focus();
+        }
+        flush();
+    }
+    let exporting = false;
+    function downloadFinished(message) {
+        exporting = false;
+        const notice = document.getElementById("download-status"); if (notice) notice.textContent = message;
+    }
+    window.tease = {ready,receive,downloadFinished,exportCsv(csv) {
+        if (exporting) return;
+        exporting = true;
+        try { window.ipc.postMessage(JSON.stringify({export_csv:csv})); }
+        catch (_) { downloadFinished("Could not request CSV export. Please try again."); }
+    }};
+    if (live) live.addEventListener("change", () => {
+        cancelPending();
+        enable(initialized && !unavailable && activeRequest === null, activeRequest !== null);
+        if (isLive()) schedule();
+        else if (activeRequest === null) status.textContent = "Live prediction paused. Select Predict to run.";
+    });
+    inputs.forEach((input,index) => {
+        if (input.type === "file") input.addEventListener("change", async () => {
+            changed();
+            const ticket = input._ticket = (input._ticket || 0) + 1;
+            input._payload = ""; input._reading = true; button.disabled = true;
+            const file = input.files[0], preview = document.getElementById(`preview-${index}`); preview.replaceChildren();
+            try {
+                const raw = await window.teaseFiles.read(file,input.dataset.fileKind);
+                if (input._ticket !== ticket) return;
+                window.teaseFiles.apply(input,raw,preview,file?.name || "No file selected",false);
+                clearErrors(); status.textContent = raw ? "File loaded. Select Predict to run." : "Select a file.";
+            } catch (failure) {
+                if (input._ticket !== ticket) return;
+                input._payload = ""; input._reading = false;
+                error.textContent = failure.message; status.textContent = "File not loaded.";
+            }
+            enable(initialized && !unavailable && activeRequest === null, activeRequest !== null);
+            changed();
+        });
+        input.addEventListener("compositionstart", () => {input._composing = true; revision++; cancelPending();});
+        input.addEventListener("compositionend", () => {input._composing = false; changed();});
+        input.addEventListener("input", () => {
+            if (input.type === "range") input.nextElementSibling.textContent = input.value;
+            if (preset) preset.value = "";
+            if (input.type !== "file") changed();
+        });
+        input.addEventListener("change", () => { if (preset) preset.value = ""; if (input.type !== "file") changed(); });
+    });
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+        if (!initialized || unavailable || button.disabled || activeRequest !== null) return;
+        cancelPending(); send(snapshot());
+    });
+    enable(false,true); status.textContent = "Preparing model…";
+    try { window.ipc.postMessage("ready"); }
+    catch (_) { ready("Could not connect to the model. Restart the demo."); }
+})();
+</script></body></html>

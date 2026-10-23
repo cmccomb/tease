@@ -1,6 +1,6 @@
 [package]
 name = "tease"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 rust-version = "1.88"
 authors = ["Chris McComb <ccmcc2012@gmail.com>"]
@@ -14,7 +14,9 @@ keywords = ["machine-learning", "ml", "ai", "smartcore", "gui"]
 categories = ["algorithms", "mathematics", "gui"]
 include = [
     "src/**", "examples/**", "tests/**", "scripts/check-package.py",
-    "docs/migration-0.2.md", "docs/examples.md", "docs/guide.md", "README.md", "CHANGELOG.md",
+    "docs/migration-0.2.md", "docs/examples.md", "docs/guide.md", "docs/preview-response.png",
+    "docs/preview-image.png", "docs/index.html", "docs/live/index.html", "docs/live/model.js",
+    "README.md", "CHANGELOG.md",
     "RELEASING.md", "LICENSE-MIT", "LICENSE-APACHE", "Cargo.toml", "Cargo.lock",
 ]
 
