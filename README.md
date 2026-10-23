@@ -9,13 +9,7 @@ Turn a Rust function or machine-learning model into a desktop demo. Tease builds
 the input form and results view, validates submitted values, and runs predictions
 on a worker thread so the window stays responsive.
 
-![Tease demo with a gain field, offset slider, response plot, and model-supplied probability bars](https://raw.githubusercontent.com/cmccomb/tease/master/docs/preview-response.png)
-
-Preview from the runnable [response example](https://github.com/cmccomb/tease/blob/master/examples/preview.rs).
-[Try the interactive browser preview](https://cmccomb.com/tease/) or
-[see more widget previews](https://github.com/cmccomb/tease/blob/master/docs/examples.md#widget-previews).
-
-<iframe title="Interactive Tease widget preview" src="https://cmccomb.com/tease/live/" width="100%" height="760" loading="lazy"></iframe>
+[Try the interactive browser preview](https://cmccomb.com/tease/).
 
 ## Get started
 
@@ -46,17 +40,24 @@ images, tables, and class scores. Live prediction, presets, comparisons, and bat
 prediction are optional. See the [feature guide](https://github.com/cmccomb/tease/blob/master/docs/guide.md)
 for the APIs, limits, and inference behavior.
 
-## Examples
+## Preview
+
+[![Tease demo with a gain field, offset slider, response plot, and model-supplied probability bars](https://raw.githubusercontent.com/cmccomb/tease/master/docs/preview-response.png)](https://cmccomb.com/tease/)
+
+Run the [response example](https://github.com/cmccomb/tease/blob/master/examples/preview.rs)
+locally. The linked browser preview runs the same analytical model in JavaScript;
+the desktop example runs its Rust callback.
+See the [widget gallery](https://github.com/cmccomb/tease/blob/master/docs/examples.md#widget-previews)
+for an image input and output.
+
+## More examples
 
 From a Tease checkout, try:
 
 ```sh
 cargo run --locked --example addition
 cargo run --locked --example preview
-cargo run --locked --example exploration
 cargo run --locked --example images
-cargo run --locked --example batch
-cargo run --locked --example live
 ```
 
 The [example guide](https://github.com/cmccomb/tease/blob/master/docs/examples.md)

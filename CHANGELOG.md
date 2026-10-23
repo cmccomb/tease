@@ -7,7 +7,7 @@
 - Added screenshots from the runnable examples to the README and example guide.
 - Added a self-contained interactive browser preview on GitHub Pages, linked
   from the README and embedded in rustdoc. Its example model runs locally in
-  the browser.
+  the browser. The crate homepage now points to the live preview.
 - No public API changes.
 
 ## 0.5.1 — 2026-10-22

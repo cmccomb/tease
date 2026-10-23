@@ -64,7 +64,7 @@ notes from CHANGELOG.md. Verify the actual crates.io version and docs.rs build.
 The public browser demo is served from the `gh-pages` branch. When its source in
 `docs/live/` changes, copy `docs/.nojekyll`, `docs/index.html`, and `docs/live/`
 to that branch and verify the deployed page and its predictions before publishing
-a README that links to or embeds it. The iframe appears in rustdoc; crates.io
-sanitizes it and retains the image and link.
+a README that links to it. `docs/rustdoc-preview.md` adds the iframe only to
+rustdoc; the crates.io README displays the screenshot and a normal link.
 Never infer publication from a successful dry run. Do not reuse or move an existing
 release tag to a different commit.
