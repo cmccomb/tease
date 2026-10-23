@@ -42,7 +42,7 @@ for the APIs, limits, and inference behavior.
 
 ## Preview
 
-[![Tease demo with a gain field, offset slider, response plot, and model-supplied probability bars](https://raw.githubusercontent.com/cmccomb/tease/master/docs/preview-response.png)](https://cmccomb.com/tease/)
+[![Tease demo with a gain field, offset slider, response plot, and model-supplied probability bars](https://raw.githubusercontent.com/cmccomb/tease/de901d628ba27608afa35e00ca3b93e5652ed7da/docs/preview-response.png)](https://cmccomb.com/tease/)
 
 Run the [response example](https://github.com/cmccomb/tease/blob/master/examples/preview.rs)
 locally. The linked browser preview runs the same analytical model in JavaScript;
