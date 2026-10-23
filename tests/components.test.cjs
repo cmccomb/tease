@@ -10,6 +10,12 @@ test('plots draw line/scatter/bar with accessible point labels and literal legen
         assert.match(f.outputs[0].textContent, /<script>unsafe/);
     }
 });
+test('probability curves use readable y-axis ticks',()=>{
+    const f=fixture();
+    f.window.teaseView.render(f.outputs[0],{kind:'plot',plot:{kind:'line',x_label:'x',y_label:'probability',series:[{name:'response',points:[[-3,0.047],[0,0.5],[3,0.953]]}]}});
+    const labels=find(find(f.outputs[0],'svg')[0],'text').map(node=>node.textContent);
+    for(const tick of ['0','0.25','0.5','0.75','1']) assert.ok(labels.includes(tick));
+});
 test('class bars sort supplied probabilities without inventing scores',()=>{
     const f=fixture(); f.window.teaseView.render(f.outputs[0],{kind:'scores',probabilities:true,scores:[{label:'Low',score:0.2},{label:'High',score:0.8}]});
     assert.equal(find(f.outputs[0],'meter')[0].value,0.8); assert.match(f.outputs[0].textContent,/80.0%/);

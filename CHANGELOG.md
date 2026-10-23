@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.2 — 2026-10-22
+
+- Added a live example that previews number, slider, dropdown, plot, and
+  class-score widgets with a small analytical model.
+- Added screenshots from the runnable examples to the README and example guide.
+- Added a self-contained interactive browser preview on GitHub Pages, linked
+  from the README and embedded in rustdoc. Its example model runs locally in
+  the browser. The crate homepage now points to the live preview.
+- No public API changes.
+
 ## 0.5.1 — 2026-10-22
 
 - Shortened the crate README for easier reading on crates.io and added release,

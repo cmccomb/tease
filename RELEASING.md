@@ -12,7 +12,7 @@ cargo fmt --all --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked --all-targets
 cargo test --locked --doc
-node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs tests/live.test.cjs
+node --test tests/ui.test.cjs tests/components.test.cjs tests/files.test.cjs tests/live.test.cjs tests/preview.test.cjs
 RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
 python3 scripts/check-package.py
 cargo publish --locked --dry-run --allow-dirty
@@ -61,5 +61,10 @@ After review and explicit approval: commit and push the branch, wait for CI,
 resolve remaining platform checks, and merge the approved change. Then separately
 approve publication, create the version tag, publish the crate, and create release
 notes from CHANGELOG.md. Verify the actual crates.io version and docs.rs build.
+The public browser demo is served from the `gh-pages` branch. When its source in
+`docs/live/` changes, copy `docs/.nojekyll`, `docs/index.html`, and `docs/live/`
+to that branch and verify the deployed page and its predictions before publishing
+a README that links to it. `docs/rustdoc-preview.md` adds the iframe only to
+rustdoc; the crates.io README displays the screenshot and a normal link.
 Never infer publication from a successful dry run. Do not reuse or move an existing
 release tag to a different commit.
