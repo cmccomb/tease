@@ -1,4 +1,4 @@
-<!-- Generated from examples/preview.rs using Tease 0.5.2 HTML renderer; model.js adapts its example model for a static browser preview. -->
+<!-- Generated from examples/preview.rs using Tease 0.5.2 HTML renderer; model.js runs the example model in the browser, and focus.js limits embedded API previews to the relevant widgets. -->
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tune a response curve</title><style>:root { font-family: system-ui, sans-serif; color: #17242f; background: #f3f5f7; }
@@ -32,7 +32,7 @@ h2 { font-size: 1.25rem; } h3 { font-size: 1.1rem; } h4 { margin-bottom: 8px; }
 .table-scroll { overflow: auto; max-height: 360px; } .table-scroll td { white-space: pre-wrap; overflow-wrap: anywhere; }
 .file-preview { margin: 8px 0; } .file-preview .result-image { max-height: 220px; }
 .live-control { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
-</style><script src="model.js"></script></head><body><main>
+</style><link rel="stylesheet" href="focus.css"><script src="focus.js"></script><script src="model.js"></script></head><body><main>
 <h1>Tune a response curve</h1><p class="description">Change the inputs to update the model output. Pause live prediction to use Predict manually.</p>
 <div class="panels"><form id="tease-form" novalidate><label class="live-control"><input id="live" type="checkbox" checked>Live prediction</label><div class="field"><label for="input-0">Gain (×)</label><input data-input id="input-0" type="number" step="any" value="1" min="0.1" max="5" required aria-describedby="help-0 error-0"><p class="help" id="help-0">Higher gain makes the transition steeper.</p><p class="error" id="error-0"></p></div><div class="field"><label for="input-1">Offset</label><input data-input id="input-1" type="range" min="-3" max="3" step="0.1" value="0" aria-describedby="help-1 error-1"><output class="slider-value" for="input-1">0</output><p class="help" id="help-1"></p><p class="error" id="error-1"></p></div><div class="field"><label for="input-2">Plot style</label><select data-input id="input-2" aria-describedby="help-2 error-2"><option value="0" selected>Line</option><option value="1">Scatter</option></select><p class="help" id="help-2"></p><p class="error" id="error-2"></p></div><button id="submit" type="submit">Predict</button></form>
 <section id="results" aria-label="Results" aria-live="polite"><div class="field"><label for="output-0">Response at x = 1</label><output data-output id="output-0"></output></div><div class="field"><label for="output-1">Response curve</label><output data-output id="output-1"></output></div><div class="field"><label for="output-2">Outcomes at x = 1</label><output data-output id="output-2"></output></div><p id="status" role="status">Ready.</p></section></div>

@@ -109,6 +109,11 @@ pub enum Input {
         max: Option<f64>,
     },
     /// A bounded numerical slider.
+    ///
+    /// <details><summary>Try a slider</summary>
+    /// <p>Tease renders this control; the browser preview runs its example model in JavaScript.</p>
+    /// <iframe title="Tease slider preview" src="https://cmccomb.com/tease/live/?preview=slider" width="100%" height="190" style="max-width:720px" loading="lazy"></iframe>
+    /// </details>
     Slider {
         /// Plain-text label, or a generated one-based label.
         label: Option<String>,
@@ -122,6 +127,11 @@ pub enum Input {
         initial_value: f64,
     },
     /// A dropdown whose options may carry numerical or text values.
+    ///
+    /// <details><summary>Try a dropdown that changes a plot</summary>
+    /// <p>Tease renders this control and plot; the browser preview runs its example model in JavaScript.</p>
+    /// <iframe title="Tease dropdown and plot preview" src="https://cmccomb.com/tease/live/?preview=dropdown" width="100%" height="430" style="max-width:720px" loading="lazy"></iframe>
+    /// </details>
     Dropdown {
         /// Plain-text label, or a generated one-based label.
         label: Option<String>,
@@ -578,6 +588,11 @@ impl Output {
         }
     }
     /// Define normalized class probabilities supplied by the model.
+    ///
+    /// <details><summary>Try probability bars</summary>
+    /// <p>Tease renders these bars; the browser preview runs its example model in JavaScript.</p>
+    /// <iframe title="Tease probability bars preview" src="https://cmccomb.com/tease/live/?preview=probabilities" width="100%" height="285" style="max-width:720px" loading="lazy"></iframe>
+    /// </details>
     pub fn probabilities(label: impl Into<String>) -> Self {
         Self::Scores {
             label: Some(label.into()),
