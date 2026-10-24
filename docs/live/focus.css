@@ -1,0 +1,16 @@
+/* Compact views of the same Tease-rendered example for its API docs. */
+html[data-preview] { background: white; }
+html[data-preview] main { max-width: 680px; padding: 8px; }
+html[data-preview] .panels { display: block; }
+html[data-preview] form, html[data-preview] section {
+    padding: 0;
+    border: 0;
+    background: none;
+}
+html[data-preview] form { margin-bottom: 8px; }
+html[data-preview] .field { margin: 0; }
+html[data-preview] [hidden] { display: none !important; }
+html[data-preview="slider"] #output-0 { font-size: 1.5rem; font-weight: 600; }
+html[data-preview="dropdown"] svg { max-width: 460px; }
+html[data-preview="dropdown"] details { margin: 8px 0; }
+html[data-preview="probabilities"] .score-row { grid-template-columns: minmax(75px, 1fr) 2fr auto; }

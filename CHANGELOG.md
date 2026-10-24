@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Added focused live previews beside the slider, dropdown, and probability APIs.
+- Collapsed the full rustdoc demo so it opens when requested.
+- No API or runtime behavior changes.
+
 ## 0.5.2 — 2026-10-22
 
 - Added a live example that previews number, slider, dropdown, plot, and
