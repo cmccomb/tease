@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.4 — 2026-10-24
+
+- Put a compact interactive response curve near the top of the rustdoc home page.
+- Added bar plots to the response example, reused its plot preview beside
+  `Output::plot`, and kept the full demo collapsed.
+- Kept the crates.io README concise; no API or runtime behavior changes.
+
 ## 0.5.3 — 2026-10-24
 
 - Added focused live previews beside the slider, dropdown, and probability APIs.

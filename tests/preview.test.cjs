@@ -16,6 +16,10 @@ test('browser preview computes the documented default and changed response', () 
     assert.equal(changed.values[0], '0.9526');
     assert.equal(changed.values[1].plot.kind, 'scatter');
     assert.equal(changed.values[2].scores[1].score.toFixed(3), '0.047');
+
+    const bars = predict(['1', '0', '2']);
+    assert.equal(bars.values[1].plot.kind, 'bar');
+    assert.equal(bars.values[1].plot.series.length, 1);
 });
 
 test('browser preview validates bad requests and retains Tease live controls', () => {

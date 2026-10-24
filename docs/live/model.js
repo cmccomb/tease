@@ -25,26 +25,29 @@ const teasePreviewModel = (() => {
             return error(1, "Offset", "Value must follow the slider step.");
         }
 
-        if (inputs[2] !== "0" && inputs[2] !== "1") {
+        if (!["0", "1", "2"].includes(inputs[2])) {
             return error(2, "Plot style", "Choose one of the available options.");
         }
-        const kind = inputs[2] === "1" ? "scatter" : "line";
+        const kind = ["line", "scatter", "bar"][Number(inputs[2])];
         const response = x => 1 / (1 + Math.exp(-gain * x - offset));
         const probability = response(1);
+        const series = [
+            {
+                name: "response",
+                points: Array.from({ length: 41 }, (_, i) => {
+                    const x = -3 + i * 0.15;
+                    return [x, response(x)];
+                }),
+            },
+        ];
+        if (kind !== "bar") {
+            series.push({ name: "reference", points: [[-3, 0.5], [3, 0.5]] });
+        }
         const plot = {
             kind,
             x_label: "Input x",
             y_label: "Response probability",
-            series: [
-                {
-                    name: "response",
-                    points: Array.from({ length: 41 }, (_, i) => {
-                        const x = -3 + i * 0.15;
-                        return [x, response(x)];
-                    }),
-                },
-                { name: "reference", points: [[-3, 0.5], [3, 0.5]] },
-            ],
+            series,
         };
         return {
             kind: "success",
