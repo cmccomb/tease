@@ -1,5 +1,5 @@
 #![warn(missing_docs)]
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../docs/rustdoc-home.md")]
 #![doc = include_str!("../docs/rustdoc-preview.md")]
 
 mod bridge;

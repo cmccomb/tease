@@ -19,7 +19,7 @@ probability bars are model outputs, not measured accuracy.
 Run `cargo run --locked --example preview` or
 [try the interactive browser preview](https://cmccomb.com/tease/). The default inputs yield a response
 of `0.7311` at x=1 and probabilities of 73.1% and 26.9%. Change the gain, offset,
-or plot style to update automatically. Pause live prediction to use Predict manually.
+or line/scatter/bar plot style to update automatically. Pause live prediction to use Predict manually.
 The browser page runs the same analytical formula locally in JavaScript; the desktop
 example runs its Rust callback on a worker thread.
 

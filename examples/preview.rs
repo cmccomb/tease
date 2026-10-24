@@ -26,6 +26,7 @@ fn demo() -> Teaser {
                 options: vec![
                     Choice::text("Line", "line"),
                     Choice::text("Scatter", "scatter"),
+                    Choice::text("Bar", "bar"),
                 ],
                 initial_value: 0,
             },
@@ -41,6 +42,7 @@ fn demo() -> Teaser {
             let offset = values[1].as_number()?;
             let kind = match values[2].as_text()? {
                 "scatter" => PlotKind::Scatter,
+                "bar" => PlotKind::Bar,
                 _ => PlotKind::Line,
             };
             let response = |x: f64| 1.0 / (1.0 + (-gain * x - offset).exp());
@@ -49,8 +51,8 @@ fn demo() -> Teaser {
                 kind,
                 x_label: "Input x".into(),
                 y_label: "Response probability".into(),
-                series: vec![
-                    Series {
+                series: {
+                    let mut series = vec![Series {
                         name: "response".into(),
                         points: (0..=40)
                             .map(|i| {
@@ -58,12 +60,15 @@ fn demo() -> Teaser {
                                 [x, response(x)]
                             })
                             .collect(),
-                    },
-                    Series {
-                        name: "reference".into(),
-                        points: vec![[-3.0, 0.5], [3.0, 0.5]],
-                    },
-                ],
+                    }];
+                    if !matches!(kind, PlotKind::Bar) {
+                        series.push(Series {
+                            name: "reference".into(),
+                            points: vec![[-3.0, 0.5], [3.0, 0.5]],
+                        });
+                    }
+                    series
+                },
             };
             Ok(vec![
                 Value::Number(probability),

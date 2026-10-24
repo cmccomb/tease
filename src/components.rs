@@ -575,6 +575,11 @@ impl Output {
         }
     }
     /// Define a plot result.
+    ///
+    /// <details><summary>Try line, scatter, and bar plots</summary>
+    /// <p>Tease renders this plot; the browser preview runs its example model in JavaScript.</p>
+    /// <iframe title="Tease plot preview" src="https://cmccomb.com/tease/live/?preview=dropdown" width="100%" height="430" style="max-width:720px" loading="lazy"></iframe>
+    /// </details>
     pub fn plot(label: impl Into<String>) -> Self {
         Self::Plot {
             label: Some(label.into()),
